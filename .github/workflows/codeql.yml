@@ -28,10 +28,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Gitleaks Scan
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Gitleaks Scan (No License Required)
+      run: |
+        docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
