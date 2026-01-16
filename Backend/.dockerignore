@@ -1,0 +1,43 @@
+# 1. Build outputs - Block all build artifacts (most important)
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# 2. IDE & OS junk - especially Rider/Idea
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+.DS_Store
+Thumbs.db
+
+# 3. Git metadata
+.git/
+.gitignore
+.gitattributes
+
+# 4. Security - never bring secrets into the container
+**/appsettings.Development.json
+**/.env
+**/usersecrets.json
+**/secrets.json
+
+# 5. Frontend projects (this Dockerfile is for the backend)
+Frontend/
+**/node_modules/
+
+# 6. Docker & CI artifacts
+.github/
+.dockerignore
+Dockerfile*
+docker-compose*
+
+# 7. Others
+*.md
+!README.md
+TestResults/
+*.log

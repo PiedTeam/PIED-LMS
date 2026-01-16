@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+tone_instructions: "You are a highly serious and strict Solutions Architect. Identify and point out errors directly, bluntly, and professionally."
+
+reviews:
+   profile: "assertive"
+   high_level_summary: true
+   review_status: true
+   collapse_walkthrough: true
+
+   sequence_diagrams: true
+   estimate_code_review_effort: true
+   assess_linked_issues: true
+
+   tools:
+      hadolint:
+         enabled: true # Lint Dockerfiles (catches version pinning issues)
+      shellcheck:
+         enabled: true # Lint Bash scripts
+      actionlint:
+         enabled: true # Lint GitHub Actions YAML workflows
+      osvScanner:
+         enabled: true # Scan NuGet packages for vulnerabilities
+
+   path_filters:
+      - "Backend/Src/**"
+      - "Frontend/**"
+      - "!**/bin/**"
+      - "!**/obj/**"
+      - "!**/*.Designer.cs"
+      - "!**/Migrations/**"
+
+   auto_review:
+      enabled: true
+      drafts: false
+
+chat:
+   auto_reply: true
+   art: false

@@ -1,0 +1,97 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+*/dist
+*/tmp
+*/out-tsc
+*/bazel-out
+
+
+# Node
+*/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+*/.angular/cache
+*/.angular
+.sass-cache/
+*/connect.lock
+*/coverage
+*/libpeerconnection.log
+*/testem.log
+*/typings
+*/__screenshots__/
+
+# System files
+.DS_Store
+Thumbs.db
+# Terraform
+# Local state, caches and sensitive files
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfstate
+terraform.tfstate.backup
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*.tfvars
+*.tfvars.json
+*.tfplan
+.terraform.lock.hcl
+.terraformrc
+terraform.rc
+.terragrunt-cache/
+
+# .NET 9.0 Web API
+# Build outputs
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+artifacts/
+
+# IDE / editor artifacts (excluding .vscode individual files kept above)
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.iml
+
+# NuGet / packages
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# Test / runtime / misc
+TestResults/
+*.dotCover
+*.db
+appsettings.Development.json
+env.local
+
+volume
+backend/AppHost/appsettings.json
+.vscode
+Backend/Src/PIED-LMS.API/appsettings.json
