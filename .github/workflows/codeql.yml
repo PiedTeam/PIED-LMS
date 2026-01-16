@@ -42,7 +42,11 @@ jobs:
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality 
+        queries: security-extended,security-and-quality
+        config: |
+          paths:
+            - Backend
+            - Frontend
 
     - name: Restore and Build
       # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
