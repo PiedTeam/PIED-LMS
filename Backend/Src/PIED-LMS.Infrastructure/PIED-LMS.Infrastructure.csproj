@@ -8,8 +8,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PIED-LMS.Application\PIED-LMS.Application.csproj" />
-        <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj" />
+        <PackageReference Include="EFCore.NamingConventions"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <ProjectReference Include="..\PIED-LMS.Application\PIED-LMS.Application.csproj"/>
+        <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj"/>
     </ItemGroup>
 
 </Project>
