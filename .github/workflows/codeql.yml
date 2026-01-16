@@ -8,7 +8,7 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'csharp' ]
+        # Thêm javascript-typescript vào matrix để quét Next.js
+        language: [ 'csharp', 'javascript-typescript' ]
 
     steps:
     - name: Checkout repository
@@ -31,6 +32,8 @@ jobs:
         docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v --no-git
 
     - name: Setup .NET
+      # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
+      if: matrix.language == 'csharp'
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
@@ -42,6 +45,8 @@ jobs:
         queries: security-extended,security-and-quality 
 
     - name: Restore and Build
+      # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
+      if: matrix.language == 'csharp'
       run: |
         cd Backend
         dotnet restore
