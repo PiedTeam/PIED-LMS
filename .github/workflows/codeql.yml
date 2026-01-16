@@ -45,8 +45,8 @@ jobs:
         queries: security-extended,security-and-quality
         config: |
           paths:
-            - Backend
-            - Frontend
+            - 'Backend/**'
+            - 'Frontend/**'
 
     - name: Restore and Build
       # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
