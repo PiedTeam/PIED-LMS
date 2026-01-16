@@ -45,14 +45,14 @@ jobs:
         queries: security-extended,security-and-quality
         config: |
           paths:
-            - 'backend/**'
+            - 'Backend/**'
             - 'frontend/**'
 
     - name: Restore and Build
       # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
       if: matrix.language == 'csharp'
       run: |
-        cd backend
+        cd Backend
         dotnet restore
         dotnet build Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
 

@@ -1,4 +1,4 @@
-name: PIED-LMS backend CI (Verify Only)
+name: PIED-LMS Backend CI (Verify Only)
 
 permissions:
   contents: read
@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
-      - "backend/**"
+      - "Backend/**"
 
 jobs:
   verify:
@@ -26,8 +26,8 @@ jobs:
 
       - name: Restore & Build Check
         run: |
-          dotnet restore backend/Src/PIED-LMS.API/PIED-LMS.API.csproj
-          dotnet build backend/Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
+          dotnet restore Backend/Src/PIED-LMS.API/PIED-LMS.API.csproj
+          dotnet build Backend/Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
 
       # Step 2: Check Dockerfile (build draft to verify syntax)
       - name: Set up Docker Buildx
@@ -36,8 +36,8 @@ jobs:
       - name: Build Docker Check
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Src/PIED-LMS.API/Dockerfile
+          context: ./Backend
+          file: ./Backend/Src/PIED-LMS.API/Dockerfile
           push: false # IMPORTANT: This setting will not push to Hub
           cache-from: type=gha
           cache-to: type=gha,mode=max
