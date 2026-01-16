@@ -7,16 +7,19 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SectionName));
+        services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(DatabaseOptions.SectionName))
+            .Validate(opt => !string.IsNullOrWhiteSpace(opt.Host), "Database: Host is required")
+            .Validate(opt => opt.Port > 0 && opt.Port <= 65535, "Database: Port must be between 1 and 65535")
+            .Validate(opt => !string.IsNullOrWhiteSpace(opt.Name), "Database: Name is required")
+            .Validate(opt => !string.IsNullOrWhiteSpace(opt.User), "Database: User is required")
+            .Validate(opt => !string.IsNullOrWhiteSpace(opt.Password), "Database: Password is required")
+            .ValidateOnStart();
 
-        var dbOptions = configuration.GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>();
-        if (dbOptions is null || string.IsNullOrEmpty(dbOptions.Host))
+        services.AddDbContext<AppDbContext>((sp, options) =>
         {
-            throw new InvalidOperationException("Database configuration is missing or invalid.");
-        }
-        services.AddDbContext<AppDbContext>(options =>
-        {
-            options.UseNpgsql(dbOptions?.ConnectionString)
+            var dbOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<DatabaseOptions>>().Value;
+            options.UseNpgsql(dbOptions.ConnectionString)
                 .UseSnakeCaseNamingConvention();
         });
 

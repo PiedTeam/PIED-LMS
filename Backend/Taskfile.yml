@@ -25,7 +25,7 @@ tasks:
   db:add:
     desc: "Add a new migration (Usage: task db:add -- Name)"
     cmds:
-      - "{{.DOPPLER}} dotnet ef migrations add {{.CLI_ARGS | default \"AutoMigration\"}} --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}}"
+      - '{{.DOPPLER}} dotnet ef migrations add {{.CLI_ARGS | default "AutoMigration"}} --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}}'
 
   db:remove:
     desc: "Remove the last migration (if not applied)"
@@ -53,4 +53,4 @@ tasks:
   list:
     desc: "List all available tasks"
     cmds:
-      - task --list
+      - go-task --list
