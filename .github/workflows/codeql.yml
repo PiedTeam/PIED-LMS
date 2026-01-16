@@ -28,7 +28,7 @@ jobs:
 
     - name: Gitleaks Scan
       run: |
-        docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" --redact -v
+        docker run --v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v --no-git
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -36,18 +36,16 @@ jobs:
         dotnet-version: '10.0.x'
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         queries: security-extended,security-and-quality 
 
     - name: Restore and Build
       run: |
-        # Di chuyển vào folder Backend để chạy lệnh dotnet
         cd Backend
         dotnet restore
-        # Build project API chính, CodeQL sẽ tự "theo dõi" quá trình này
-        dotnet build Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore
+        dotnet build Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
