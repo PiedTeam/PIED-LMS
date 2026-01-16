@@ -16,10 +16,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Using Include="System.Collections.Generic" />
-        <Using Include="System.Linq" />
-        <Using Include="System.Threading.Tasks" />
-        <Using Include="System.Text" />
+        <Using Include="System.Collections.Generic"/>
+        <Using Include="System.Linq"/>
+        <Using Include="System.Threading.Tasks"/>
+        <Using Include="System.Text"/>
     </ItemGroup>
 
     <PropertyGroup>
