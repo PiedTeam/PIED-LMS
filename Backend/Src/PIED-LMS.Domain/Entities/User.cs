@@ -1,11 +1,24 @@
+using System.Net.Mail;
+
 namespace PIED_LMS.Domain.Entities;
 
 public class User
 {
+    /// <summary>
+    /// Parameterless constructor for EF Core materialization.
+    /// </summary>
+    private User()
+    {
+        Email = null!;
+        FirstName = null!;
+        LastName = null!;
+    }
+
     public User(string email, string firstName, string lastName)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email không được để trống.");
+        ValidateEmailFormat(email);
 
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name là bắt buộc.");
@@ -19,6 +32,12 @@ public class User
         Email = email;
         FirstName = firstName;
         LastName = lastName;
+    }
+
+    private static void ValidateEmailFormat(string email)
+    {
+        if (!MailAddress.TryCreate(email, out _))
+            throw new ArgumentException("Email không hợp lệ.");
     }
 
     public Guid Id { get; private set; } = Guid.CreateVersion7();
