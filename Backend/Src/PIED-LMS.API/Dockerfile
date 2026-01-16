@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy cấu hình và restore
+# Copy configuration and restore
 COPY ["Directory.Build.props", "Directory.Packages.props", "global.json", "./"]
 COPY ["Src/PIED-LMS.API/PIED-LMS.API.csproj", "Src/PIED-LMS.API/"]
 COPY ["Src/PIED-LMS.Application/PIED-LMS.Application.csproj", "Src/PIED-LMS.Application/"]
@@ -10,7 +10,7 @@ COPY ["Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj", "Src/PIED-LM
 COPY ["Src/PIED-LMS.Domain/PIED-LMS.Domain.csproj", "Src/PIED-LMS.Domain/"]
 RUN dotnet restore "Src/PIED-LMS.API/PIED-LMS.API.csproj"
 
-# Copy source và Publish
+# Copy source and publish
 COPY ["Src/", "Src/"]
 WORKDIR "/src/Src/PIED-LMS.API"
 RUN dotnet publish "PIED-LMS.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
@@ -21,13 +21,13 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
-# Tối ưu chown ngay lúc copy
+# Optimize chown during copy
 COPY --from=build --chown=app:app /app/publish .
 
 USER app
 EXPOSE 8080
 
-# Healthcheck: Chấp nhận cài curl nếu bạn cần kiểm tra Endpoint thực tế
+# Healthcheck: Install curl if you need to check actual endpoint
 USER root
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \

@@ -1,10 +1,10 @@
-# 1. Build outputs - Chặn toàn bộ rác biên dịch (Quan trọng nhất)
+# 1. Build outputs - Block all build artifacts (most important)
 **/bin/
 **/obj/
 **/out/
 **/publish/
 
-# 2. IDE & OS rác - Đặc biệt là Rider/Idea của Kyros
+# 2. IDE & OS junk - especially Rider/Idea
 .idea/
 .vs/
 .vscode/
@@ -20,23 +20,23 @@ Thumbs.db
 .gitignore
 .gitattributes
 
-# 4. Bảo mật - Tuyệt đối không mang secret vào container
+# 4. Security - never bring secrets into the container
 **/appsettings.Development.json
 **/.env
 **/usersecrets.json
 **/secrets.json
 
-# 5. Các project FE (Vì đây là Docker của Backend)
+# 5. Frontend projects (this Dockerfile is for the backend)
 Frontend/
 **/node_modules/
 
-# 6. Docker & CI rác
+# 6. Docker & CI artifacts
 .github/
 .dockerignore
 Dockerfile*
 docker-compose*
 
-# 7. Khác
+# 7. Others
 *.md
 !README.md
 TestResults/

@@ -1,18 +1,18 @@
 version: "3"
 
 vars:
-  # Trỏ từ file .slnx vào .csproj
+  # Point from the .slnx file to the .csproj
   PROJECT_PATH: "Src/PIED-LMS.API/PIED-LMS.API.csproj"
   DOPPLER: "doppler run --"
 
 tasks:
   dev:
-    desc: "Chạy API với Hot Reload"
+    desc: "Run API with Hot Reload"
     cmds:
       - "{{.DOPPLER}} dotnet watch run --project {{.PROJECT_PATH}}"
 
   test:
-    desc: "Chạy toàn bộ Test trong Solution"
+    desc: "Run all tests in the solution"
     cmds:
       - "{{.DOPPLER}} dotnet test"
 
@@ -22,16 +22,16 @@ tasks:
       - "{{.DOPPLER}} dotnet ef database update --project {{.PROJECT_PATH}}"
 
   clean:
-    desc: "Dọn dẹp toàn bộ bin/obj trong backend"
+    desc: "Clean all bin/obj in the backend"
     cmds:
       - find . -type d \( -name "bin" -o -name "obj" \) -exec rm -rf {} +
 
   status:
-    desc: "Xem Doppler đang connect vào project/config nào"
+    desc: "See which project/config Doppler is connected to"
     cmds:
       - doppler configure
 
   list:
-    desc: "Liệt kê tất cả các task có sẵn"
+    desc: "List all available tasks"
     cmds:
       - go-task --list

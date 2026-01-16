@@ -1,14 +1,14 @@
 <Solution>
-  <Folder Name="/Item/">
-    <File Path=".editorconfig" />
-    <File Path="Directory.Build.props" />
-    <File Path="Directory.Packages.props" />
-  </Folder>
-  <Folder Name="/Src/">
-    <Project Path="Src/PIED-LMS.API/PIED-LMS.API.csproj" />
-    <Project Path="Src/PIED-LMS.Application/PIED-LMS.Application.csproj" />
-    <Project Path="Src/PIED-LMS.Domain/PIED-LMS.Domain.csproj" />
-    <Project Path="Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/Test/" />
+    <Folder Name="/Item/">
+        <File Path=".editorconfig" />
+        <File Path="Directory.Build.props" />
+        <File Path="Directory.Packages.props" />
+    </Folder>
+    <Folder Name="/Src/">
+        <Project Path="Src/PIED-LMS.API/PIED-LMS.API.csproj" />
+        <Project Path="Src/PIED-LMS.Application/PIED-LMS.Application.csproj" />
+        <Project Path="Src/PIED-LMS.Domain/PIED-LMS.Domain.csproj" />
+        <Project Path="Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj" />
+    </Folder>
+    <Folder Name="/Test/" />
 </Solution>
