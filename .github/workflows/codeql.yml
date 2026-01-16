@@ -28,7 +28,7 @@ jobs:
 
     - name: Gitleaks Scan
       run: |
-        docker run --v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v --no-git
+        docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v --no-git
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
