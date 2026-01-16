@@ -2,6 +2,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -18,5 +19,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
-app.MapGet("/", () => Results.Redirect("/docs"));
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/docs"));
+}
+else
+{
+    app.MapGet("/", () => Results.Ok(new { message = "PIED-LMS API is running." }));
+}
 await app.RunAsync();
