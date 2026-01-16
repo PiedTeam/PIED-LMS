@@ -1,0 +1,44 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# IDE and editor files
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.userprefs
+*.DotSettings.user
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Git
+**/.git/
+**/.gitignore
+**/.gitattributes
+
+# Documentation
+**/*.md
+!README.md
+
+# Test results
+**/TestResults/
+**/*.trx
+
+# NuGet
+**/*.nupkg
+**/.nuget/
+
+# Node modules (if any frontend assets)
+**/node_modules/
+
+# Logs
+**/*.log
+
+# Temporary files
+**/tmp/
+**/temp/

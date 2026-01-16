@@ -19,5 +19,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 await app.RunAsync();
