@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "vi-VN"
+early_access: false
+
+reviews:
+   profile: "assertive"
+   high_level_summary: true
+   review_status: true
+   collapse_walkthrough: false
+
+   # Cấu hình lọc file
+   path_filters:
+      - "Backend/Src/**"
+      - "Frontend/**"
+      - "!**/bin/**"
+      - "!**/obj/**"
+      - "!**/*.Designer.cs"
+      - "!**/Migrations/**"
+
+   auto_review:
+      enabled: true
+      drafts: false
+
+chat:
+   auto_reply: true
