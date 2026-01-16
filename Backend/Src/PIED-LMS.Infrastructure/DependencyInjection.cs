@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Options;
+
+using PIED_LMS.Infrastructure.Identity;
 using PIED_LMS.Infrastructure.Options;
 using PIED_LMS.Infrastructure.Persistence;
 
@@ -18,10 +21,14 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
-            var dbOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<DatabaseOptions>>().Value;
+            var dbOptions = sp.GetRequiredService<IOptions<DatabaseOptions>>().Value;
             options.UseNpgsql(dbOptions.ConnectionString)
                 .UseSnakeCaseNamingConvention();
         });
+
+        services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
 
         services.Configure<IdentityOptions>(options =>
         {
