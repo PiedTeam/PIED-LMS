@@ -95,3 +95,4 @@ volume
 backend/AppHost/appsettings.json
 .vscode
 Backend/Src/PIED-LMS.API/appsettings.json
+bin\\Debug/

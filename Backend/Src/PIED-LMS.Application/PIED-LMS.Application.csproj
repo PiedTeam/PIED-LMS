@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj" />
+        <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj"/>
     </ItemGroup>
 
 </Project>

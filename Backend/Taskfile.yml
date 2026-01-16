@@ -1,35 +1,54 @@
 version: "3"
 
 vars:
-  # Point from the .slnx file to the .csproj
-  PROJECT_PATH: "Src/PIED-LMS.API/PIED-LMS.API.csproj"
   DOPPLER: "doppler run --"
+  API_PROJECT: "Src/PIED-LMS.API/PIED-LMS.API.csproj"
+  INFRA_PROJECT: "Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj"
 
 tasks:
   dev:
     desc: "Run API with Hot Reload"
     cmds:
-      - "{{.DOPPLER}} dotnet watch run --project {{.PROJECT_PATH}}"
+      - "{{.DOPPLER}} dotnet watch run --project {{.API_PROJECT}}"
 
   test:
-    desc: "Run all tests in the solution"
+    desc: "Run all tests"
     cmds:
       - "{{.DOPPLER}} dotnet test"
 
-  migrate:
-    desc: "Update DB"
+  # Entity Framework
+  db:update:
+    desc: "Update database to latest migration"
     cmds:
-      - "{{.DOPPLER}} dotnet ef database update --project {{.PROJECT_PATH}}"
+      - "{{.DOPPLER}} dotnet ef database update --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}}"
+
+  db:add:
+    desc: "Add a new migration (Usage: task db:add -- Name)"
+    cmds:
+      - '{{.DOPPLER}} dotnet ef migrations add {{.CLI_ARGS | default "AutoMigration"}} --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}}'
+
+  db:remove:
+    desc: "Remove the last migration (if not applied)"
+    cmds:
+      - "{{.DOPPLER}} dotnet ef migrations remove --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}}"
+
+  db:reset:
+    desc: "Drop and recreate database (CAUTION!)"
+    cmds:
+      - "{{.DOPPLER}} dotnet ef database drop --project {{.INFRA_PROJECT}} --startup-project {{.API_PROJECT}} --force"
+      - task: db:update
 
   clean:
-    desc: "Clean all bin/obj in the backend"
+    desc: "🧹 Clean all build artifacts (bin/obj)"
     cmds:
       - find . -type d \( -name "bin" -o -name "obj" \) -exec rm -rf {} +
+      - dotnet clean
 
   status:
-    desc: "See which project/config Doppler is connected to"
+    desc: "Check Doppler configuration"
     cmds:
       - doppler configure
+      - doppler secrets
 
   list:
     desc: "List all available tasks"
