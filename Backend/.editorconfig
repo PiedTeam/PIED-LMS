@@ -1,0 +1,84 @@
+# Toàn bộ quy tắc áp dụng cho root dự án
+root = true
+
+# Cấu hình chung cho mọi loại file
+[*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+charset = utf-8
+
+# Cấu hình riêng cho Web/Config (Thường dùng 2 space cho gọn)
+[*.{xml,json,yml,yaml,config,html,js,ts,css,scss}]
+indent_size = 2
+
+# Cấu hình chuyên sâu cho C# (.cs)
+[*.cs]
+
+#### 1. Naming Conventions (Quy tắc đặt tên) ####
+
+# Private fields phải có dấu gạch dưới và viết kiểu camelCase (e.g., _userRepository)
+dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields_symbols
+dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore_style
+dotnet_naming_rule.private_fields_with_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_fields_symbols.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore_style.capitalization = camel_case
+dotnet_naming_style.prefix_underscore_style.required_prefix = _
+
+# Interface phải bắt đầu bằng chữ I (e.g., IUserService)
+dotnet_naming_rule.interfaces_start_with_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_start_with_i.style = i_prefix_style
+dotnet_naming_rule.interfaces_start_with_i.severity = suggestion
+
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_style.i_prefix_style.capitalization = pascal_case
+dotnet_naming_style.i_prefix_style.required_prefix = I
+
+#### 2. Modern C# Style Rules (Chuẩn C# 12/13) ####
+
+# Ưu tiên Primary Constructors (C# 12+)
+csharp_style_prefer_primary_constructors = true:suggestion
+
+# Ưu tiên Collection Expressions [] thay cho new List<t>() (C# 12+)
+csharp_style_prefer_collection_expression = true:suggestion
+
+# Sử dụng File-scoped namespaces để giảm cấp indent
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Sử dụng 'var' khi kiểu dữ liệu đã rõ ràng
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
+
+# Ưu tiên readonly cho các field không thay đổi
+dotnet_style_prefer_readonly_fields = true:suggestion
+
+# Expression-bodied members cho các phương thức/property 1 dòng
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+
+#### 3. Formatting Rules (Định dạng code) ####
+
+# Braces (Dấu ngoặc nhọn) - Chuẩn Allman (Xuống dòng)
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Khoảng trắng
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_call_parameter_list_parentheses = false
+
+#### 4. Organizing Usings (Sắp xếp thư viện) ####
+
+# Đưa System.* lên đầu và sort theo alphabet
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Tự động xóa bỏ các using không sử dụng
+dotnet_style_unnecessary_unused_value_assignment_check = true:suggestion

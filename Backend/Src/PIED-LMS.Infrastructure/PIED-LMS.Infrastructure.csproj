@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>PIED_LMS.Infrastructure</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PIED-LMS.Application\PIED-LMS.Application.csproj" />
+        <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj" />
+    </ItemGroup>
+
+</Project>
