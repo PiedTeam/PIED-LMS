@@ -5,8 +5,6 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  schedule:
-    - cron: '26 18 * * 0'
 
 jobs:
   analyze:
@@ -20,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'csharp']
+        language: [ 'csharp' ]
 
     steps:
     - name: Checkout repository
@@ -28,9 +26,14 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Gitleaks Scan (No License Required)
+    - name: Gitleaks Scan
       run: |
-        docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" -v
+        docker run -v ${{ github.workspace }}:/path zricethezav/gitleaks:latest detect --source="/path" --redact -v
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
@@ -38,8 +41,13 @@ jobs:
         languages: ${{ matrix.language }}
         queries: security-extended,security-and-quality 
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+    - name: Restore and Build
+      run: |
+        # Di chuyển vào folder Backend để chạy lệnh dotnet
+        cd Backend
+        dotnet restore
+        # Build project API chính, CodeQL sẽ tự "theo dõi" quá trình này
+        dotnet build Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
