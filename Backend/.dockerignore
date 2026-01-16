@@ -1,44 +1,43 @@
-# Build outputs
+# 1. Build outputs - Chặn toàn bộ rác biên dịch (Quan trọng nhất)
 **/bin/
 **/obj/
 **/out/
+**/publish/
 
-# IDE and editor files
-**/.vs/
-**/.vscode/
-**/.idea/
-**/*.user
-**/*.suo
-**/*.userprefs
+# 2. IDE & OS rác - Đặc biệt là Rider/Idea của Kyros
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
 *.DotSettings.user
+.DS_Store
+Thumbs.db
 
-# OS files
-**/.DS_Store
-**/Thumbs.db
+# 3. Git metadata
+.git/
+.gitignore
+.gitattributes
 
-# Git
-**/.git/
-**/.gitignore
-**/.gitattributes
+# 4. Bảo mật - Tuyệt đối không mang secret vào container
+**/appsettings.Development.json
+**/.env
+**/usersecrets.json
+**/secrets.json
 
-# Documentation
-**/*.md
-!README.md
-
-# Test results
-**/TestResults/
-**/*.trx
-
-# NuGet
-**/*.nupkg
-**/.nuget/
-
-# Node modules (if any frontend assets)
+# 5. Các project FE (Vì đây là Docker của Backend)
+Frontend/
 **/node_modules/
 
-# Logs
-**/*.log
+# 6. Docker & CI rác
+.github/
+.dockerignore
+Dockerfile*
+docker-compose*
 
-# Temporary files
-**/tmp/
-**/temp/
+# 7. Khác
+*.md
+!README.md
+TestResults/
+*.log
