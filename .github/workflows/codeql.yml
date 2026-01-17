@@ -46,7 +46,7 @@ jobs:
         config: |
           paths:
             - 'Backend/**'
-            - 'Frontend/**'
+            - 'frontend/**'
 
     - name: Restore and Build
       # Chỉ chạy bước này nếu ngôn ngữ hiện tại là csharp
