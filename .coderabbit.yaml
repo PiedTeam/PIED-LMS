@@ -25,7 +25,7 @@ reviews:
          enabled: true # Scan NuGet packages for vulnerabilities
 
    path_filters:
-      - "Backend/Src/**"
+      - "backend/Src/**"
       - "Frontend/**"
       - "!**/bin/**"
       - "!**/obj/**"

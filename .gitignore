@@ -94,5 +94,5 @@ env.local
 volume
 backend/AppHost/appsettings.json
 .vscode
-Backend/Src/PIED-LMS.API/appsettings.json
+backend/Src/PIED-LMS.API/appsettings.json
 bin\\Debug/
