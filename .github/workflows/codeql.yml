@@ -7,12 +7,14 @@ on:
       - "backend/**"
       - "frontend/**"
       - ".github/workflows/codeql.yml"
+      - "docker-compose.yml"
   pull_request:
     branches: [ "main" ]
     paths:
       - "backend/**"
       - "frontend/**"
       - ".github/workflows/codeql.yml"
+      - "docker-compose.yml"
 
 jobs:
   gitleaks:
