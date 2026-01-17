@@ -1,6 +1,6 @@
 # Backend Overview
 
-This backend is a .NET 10 solution for PIED-LMS. It includes the API layer plus supporting application, domain, and infrastructure projects. SDK version is pinned via [Backend/global.json](global.json).
+This backend is a .NET 10 solution for PIED-LMS. It includes the API layer plus supporting application, domain, and infrastructure projects. SDK version is pinned via [backend/global.json](global.json).
 
 ## Prerequisites
 
@@ -11,18 +11,18 @@ This backend is a .NET 10 solution for PIED-LMS. It includes the API layer plus 
 
 ## Project layout
 
-- [Backend/Backend.slnx](Backend.slnx) — solution file
-- [Backend/Src/PIED-LMS.API](Src/PIED-LMS.API) — ASP.NET Core API
-- [Backend/Src/PIED-LMS.Application](Src/PIED-LMS.Application) — application services
-- [Backend/Src/PIED-LMS.Domain](Src/PIED-LMS.Domain) — domain model
-- [Backend/Src/PIED-LMS.Infrastructure](Src/PIED-LMS.Infrastructure) — infrastructure and data access
+- [backend/backend.slnx](backend.slnx) — solution file
+- [backend/Src/PIED-LMS.API](Src/PIED-LMS.API) — ASP.NET Core API
+- [backend/Src/PIED-LMS.Application](Src/PIED-LMS.Application) — application services
+- [backend/Src/PIED-LMS.Domain](Src/PIED-LMS.Domain) — domain model
+- [backend/Src/PIED-LMS.Infrastructure](Src/PIED-LMS.Infrastructure) — infrastructure and data access
 
 ## Quick start
 
 1) Restore and build
 
 ```bash
-cd Backend
+cd backend
 dotnet restore
 dotnet build
 ```
