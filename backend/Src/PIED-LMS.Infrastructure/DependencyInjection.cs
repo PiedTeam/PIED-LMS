@@ -95,6 +95,9 @@ public static class DependencyInjection
                 };
             });
 
+        // Provide access to HttpContext for services that need to set cookies
+        services.AddHttpContextAccessor();
+
         services.AddScoped<IAuthService, AuthService>();
 
         return services;

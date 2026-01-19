@@ -4,17 +4,17 @@ public sealed class ValidationFilter(IServiceProvider serviceProvider) : IAsyncA
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        foreach (var argument in context.ActionArguments.Values.Where(argument => argument is not null))
+        foreach (var parameter in context.ActionDescriptor.Parameters)
         {
-            var argumentType = argument!.GetType();
-            var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
+            var declaredType = parameter.ParameterType;
+            var validatorType = typeof(IValidator<>).MakeGenericType(declaredType);
             var validator = serviceProvider.GetService(validatorType) as IValidator;
 
             if (validator is not null)
             {
-                var validationContext = new ValidationContext<object>(argument);
-                var validationResult =
-                    await validator.ValidateAsync(validationContext, context.HttpContext.RequestAborted);
+                context.ActionArguments.TryGetValue(parameter.Name!, out var value);
+                var validationContext = new ValidationContext<object>(value);
+                var validationResult = await validator.ValidateAsync(validationContext, context.HttpContext.RequestAborted);
 
                 if (!validationResult.IsValid)
                 {

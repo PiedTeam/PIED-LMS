@@ -15,10 +15,21 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Only run migrations in development or if explicitly configured
+var runMigrationsOnStartup = app.Configuration.GetValue<bool>("RunMigrationsOnStartup", app.Environment.IsDevelopment());
+if (runMigrationsOnStartup)
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
+    app.Logger.LogInformation("Running database migrations on startup (Environment: {Environment})", app.Environment.EnvironmentName);
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+    app.Logger.LogInformation("Database migrations completed successfully");
+}
+else
+{
+    app.Logger.LogInformation("Skipping automatic database migrations (set RunMigrationsOnStartup to enable)");
 }
 
 if (app.Environment.IsDevelopment())

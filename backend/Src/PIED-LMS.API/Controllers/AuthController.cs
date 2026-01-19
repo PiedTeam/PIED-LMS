@@ -1,18 +1,25 @@
 using PIED_LMS.Application.DTOs.Auth;
 using PIED_LMS.Application.Services;
 using PIED_LMS.Domain.Common;
+using PIED_LMS.Infrastructure.Options;
+
+using Microsoft.Extensions.Options;
 
 namespace PIED_LMS.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthService authService, ILogger<AuthController> logger, IWebHostEnvironment env)
-    : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    ILogger<AuthController> logger,
+    IWebHostEnvironment env,
+    IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
     private const string _unknownErrorMessage = "Unknown error";
     private const string _unknownErrorCode = "UNKNOWN_ERROR";
     private const string _refreshTokenCookieName = "refresh_token";
-    private const int _refreshTokenCookieMaxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+    private const string _refreshTokenCookiePath = "/api/auth/refresh";
+    private readonly int _refreshTokenCookieMaxAge = jwtOptions.Value.RefreshTokenExpiryDays * 24 * 60 * 60;
 
     /// <summary>
     ///     Register a new user
@@ -36,24 +43,8 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
                 }
             });
 
-        if (Guid.TryParse(result.Data!.UserId, out var userId))
-        {
-            logger.LogInformation("Retrieving refresh token for userId: {UserId}", userId);
-            var refreshToken = await authService.GetLatestRefreshTokenAsync(userId, cancellationToken);
-            if (refreshToken != null)
-            {
-                logger.LogInformation("Successfully retrieved refresh token, setting cookie");
-                SetRefreshTokenCookie(refreshToken);
-            }
-            else
-            {
-                logger.LogWarning("No refresh token found for userId: {UserId}", userId);
-            }
-        }
-        else
-        {
-            logger.LogWarning("Failed to parse UserId: {UserId}", result.Data!.UserId);
-        }
+        logger.LogInformation("User registered successfully, setting refresh token cookie");
+        TrySetRefreshTokenCookie();
 
         return Ok(result);
     }
@@ -77,10 +68,8 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
                 }
             });
 
-        if (!Guid.TryParse(result.Data!.UserId, out var userId)) return Ok(result);
-        var refreshToken = await authService.GetLatestRefreshTokenAsync(userId, cancellationToken);
-        if (refreshToken is not null)
-            SetRefreshTokenCookie(refreshToken);
+        logger.LogInformation("User registered successfully, setting refresh token cookie");
+        TrySetRefreshTokenCookie();
 
         return Ok(result);
     }
@@ -91,7 +80,24 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await authService.RefreshTokenAsync(request, cancellationToken);
+        // Read refresh token from secure HttpOnly cookie
+        if (!Request.Cookies.TryGetValue(_refreshTokenCookieName, out var refreshToken) ||
+            string.IsNullOrEmpty(refreshToken))
+        {
+            logger.LogWarning("Refresh token not found in cookie");
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Token refresh failed",
+                Detail = "Refresh token not found in secure cookie",
+                Extensions = new Dictionary<string, object?>
+                {
+                    { "code", "AUTH_MISSING_REFRESH_TOKEN" }
+                }
+            });
+        }
+
+        var result = await authService.RefreshTokenAsync(request.AccessToken, refreshToken, cancellationToken);
 
         if (!result.IsSuccess)
             return Unauthorized(new ProblemDetails
@@ -105,10 +111,8 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
                 }
             });
 
-        if (!Guid.TryParse(result.Data!.UserId, out var userId)) return Ok(result);
-        var refreshToken = await authService.GetLatestRefreshTokenAsync(userId, cancellationToken);
-        if (refreshToken != null)
-            SetRefreshTokenCookie(refreshToken);
+        logger.LogInformation("Token refreshed successfully, updating refresh token cookie");
+        TrySetRefreshTokenCookie();
 
         return Ok(result);
     }
@@ -143,7 +147,16 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
                 }
             });
 
-        Response.Cookies.Delete(_refreshTokenCookieName);
+        // Delete refresh token cookie with matching path and options
+        Response.Cookies.Delete(_refreshTokenCookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !env.IsDevelopment(),
+            SameSite = SameSiteMode.Lax,
+            Path = _refreshTokenCookiePath
+        });
+
+        logger.LogInformation("Refresh token cookie deleted");
 
         return Ok(Result.Success());
     }
@@ -171,14 +184,16 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         return Ok(Result<object>.Success(userInfo));
     }
 
-    private void SetRefreshTokenCookie(string refreshToken)
+    // Removed: SetRefreshTokenCookie(AuthResponse) since refresh token is handled via HttpContext.Items
+
+    internal void SetRefreshTokenCookieInternal(string refreshToken)
     {
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = !env.IsDevelopment(),
             SameSite = SameSiteMode.Lax,
-            Path = "/api/auth/refresh",
+            Path = _refreshTokenCookiePath,
             MaxAge = TimeSpan.FromSeconds(_refreshTokenCookieMaxAge)
         };
 
@@ -186,5 +201,19 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
             cookieOptions.Secure, env.EnvironmentName);
 
         Response.Cookies.Append(_refreshTokenCookieName, refreshToken, cookieOptions);
+    }
+
+    private void TrySetRefreshTokenCookie()
+    {
+        // AuthService stores the refresh token in HttpContext.Items under this key
+        const string contextKey = "__internal_refresh_token";
+        if (HttpContext.Items.TryGetValue(contextKey, out var value) && value is string token && !string.IsNullOrEmpty(token))
+        {
+            SetRefreshTokenCookieInternal(token);
+        }
+        else
+        {
+            logger.LogWarning("No refresh token found in HttpContext.Items");
+        }
     }
 }

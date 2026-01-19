@@ -1,4 +1,6 @@
 using PIED_LMS.Application.DTOs.Auth;
+using System.Text;
+using Microsoft.AspNetCore.Http;
 using PIED_LMS.Application.Services;
 using PIED_LMS.Domain.Common;
 using PIED_LMS.Domain.Entities;
@@ -12,10 +14,29 @@ public sealed class AuthService(
     UserManager<UserProfile> userManager,
     SignInManager<UserProfile> signInManager,
     IOptions<JwtOptions> jwtOptions,
-    AppDbContext dbContext
+    AppDbContext dbContext,
+    IHttpContextAccessor httpContextAccessor
 ) : IAuthService
 {
     private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+    private const string RefreshTokenContextKey = "__internal_refresh_token";
+
+    private void StoreRefreshTokenInContext(string refreshToken)
+    {
+        if (httpContextAccessor.HttpContext != null)
+        {
+            httpContextAccessor.HttpContext.Items[RefreshTokenContextKey] = refreshToken;
+        }
+    }
+
+    internal string? GetStoredRefreshToken()
+    {
+        var context = httpContextAccessor.HttpContext;
+        if (context is null) return null;
+        if (context.Items.TryGetValue(RefreshTokenContextKey, out var token) && token is string s && !string.IsNullOrEmpty(s))
+            return s;
+        return null;
+    }
 
     public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request,
         CancellationToken cancellationToken = default)
@@ -31,7 +52,6 @@ public sealed class AuthService(
             request.LastName
         );
 
-        // Save domain user first (required for FK constraint)
         dbContext.DomainUsers.Add(domainUser);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -52,7 +72,9 @@ public sealed class AuthService(
             return Result<AuthResponse>.Failure("AUTH_REGISTRATION_FAILED", errors);
         }
 
-        var authResponseInternal = await GenerateAuthResponseAsync(appUser, cancellationToken);
+        var authResponseInternal = await GenerateAuthResponseAsync(appUser, noSave: true, cancellationToken);
+        StoreRefreshTokenInContext(authResponseInternal.RefreshToken);
+
         var authResponse = new AuthResponse
         {
             AccessToken = authResponseInternal.AccessToken,
@@ -78,7 +100,9 @@ public sealed class AuthService(
                 ? Result<AuthResponse>.Failure("AUTH_ACCOUNT_LOCKED", "Account is locked out")
                 : Result<AuthResponse>.Failure("AUTH_INVALID_CREDENTIALS", "Invalid email or password");
 
-        var authResponseInternal = await GenerateAuthResponseAsync(user, cancellationToken);
+        var authResponseInternal = await GenerateAuthResponseAsync(user, cancellationToken: cancellationToken);
+        StoreRefreshTokenInContext(authResponseInternal.RefreshToken);
+
         var authResponse = new AuthResponse
         {
             AccessToken = authResponseInternal.AccessToken,
@@ -92,7 +116,23 @@ public sealed class AuthService(
     public async Task<Result<AuthResponse>> RefreshTokenAsync(RefreshTokenRequest request,
         CancellationToken cancellationToken = default)
     {
-        var principal = GetPrincipalFromExpiredToken(request.AccessToken);
+        var cookieToken = httpContextAccessor.HttpContext?.Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(cookieToken))
+            return Result<AuthResponse>.Failure("AUTH_MISSING_REFRESH_TOKEN", "Refresh token not found in cookie");
+
+        return await RefreshTokenInternalAsync(request.AccessToken, cookieToken, cancellationToken);
+    }
+
+    public async Task<Result<AuthResponse>> RefreshTokenAsync(string accessToken, string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        return await RefreshTokenInternalAsync(accessToken, refreshToken, cancellationToken);
+    }
+
+    private async Task<Result<AuthResponse>> RefreshTokenInternalAsync(string accessToken, string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        var principal = GetPrincipalFromExpiredToken(accessToken);
 
         if (principal == null)
             return Result<AuthResponse>.Failure("AUTH_INVALID_TOKEN", "Invalid access token");
@@ -102,10 +142,11 @@ public sealed class AuthService(
         if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
             return Result<AuthResponse>.Failure("AUTH_INVALID_CLAIMS", "Invalid token claims");
 
-        var refreshToken = await dbContext.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken && rt.UserId == userGuid, cancellationToken);
+        var hashed = HashRefreshToken(refreshToken, _jwtOptions.SecretKey);
+        var refreshTokenEntity = await dbContext.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.TokenHash == hashed && rt.UserId == userGuid, cancellationToken);
 
-        if (refreshToken is not { IsActive: true })
+        if (refreshTokenEntity is not { IsActive: true })
             return Result<AuthResponse>.Failure("AUTH_INVALID_REFRESH_TOKEN", "Invalid or expired refresh token");
 
         var user = await userManager.FindByIdAsync(userId);
@@ -113,13 +154,17 @@ public sealed class AuthService(
         if (user == null)
             return Result<AuthResponse>.Failure("AUTH_USER_NOT_FOUND", "User not found");
 
-        // Revoke old refresh token
-        refreshToken.RevokedAt = DateTime.UtcNow;
+        // Revoke old refresh token and generate new tokens within a transaction
+        refreshTokenEntity.RevokedAt = DateTime.UtcNow;
 
-        // Generate new tokens
-        var authResponseInternal = await GenerateAuthResponseAsync(user, cancellationToken);
+        // Generate new tokens without saving (noSave: true)
+        var authResponseInternal = await GenerateAuthResponseAsync(user, noSave: true, cancellationToken);
 
+        // Persist everything atomically
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        // Store new refresh token in context for controller to set cookie
+        StoreRefreshTokenInContext(authResponseInternal.RefreshToken);
 
         var authResponse = new AuthResponse
         {
@@ -149,17 +194,19 @@ public sealed class AuthService(
 
     public async Task<string?> GetLatestRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var refreshToken = await dbContext.RefreshTokens
-            .Where(rt => rt.UserId == userId && rt.RevokedAt == null)
-            .OrderByDescending(rt => rt.CreatedAt)
-            .Select(rt => rt.Token)
-            .FirstOrDefaultAsync(cancellationToken);
+        return await Task.FromResult<string?>(null);
+    }
 
-        return refreshToken;
+    private static string HashRefreshToken(string token, string secretKey)
+    {
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey));
+        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(token));
+        return Convert.ToBase64String(hashBytes);
     }
 
     private async Task<AuthResponseInternal> GenerateAuthResponseAsync(UserProfile user,
-        CancellationToken cancellationToken)
+        bool noSave = false,
+        CancellationToken cancellationToken = default)
     {
         var accessToken = GenerateAccessToken(user);
         var refreshToken = GenerateRefreshToken();
@@ -167,14 +214,16 @@ public sealed class AuthService(
 
         var refreshTokenEntity = new RefreshToken
         {
-            Token = refreshToken,
+            TokenHash = HashRefreshToken(refreshToken, _jwtOptions.SecretKey),
             UserId = user.Id,
             ExpiresAt = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
             CreatedAt = DateTime.UtcNow
         };
 
         dbContext.RefreshTokens.Add(refreshTokenEntity);
-        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (!noSave)
+            await dbContext.SaveChangesAsync(cancellationToken);
 
         return new AuthResponseInternal
         {
