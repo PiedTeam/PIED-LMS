@@ -1,19 +1,12 @@
-using FluentValidation;
-
-using Microsoft.AspNetCore.Mvc.Filters;
-
 namespace PIED_LMS.API.Filters;
 
 public sealed class ValidationFilter(IServiceProvider serviceProvider) : IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        foreach (var argument in context.ActionArguments.Values)
+        foreach (var argument in context.ActionArguments.Values.Where(argument => argument is not null))
         {
-            if (argument is null)
-                continue;
-
-            var argumentType = argument.GetType();
+            var argumentType = argument!.GetType();
             var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
             var validator = serviceProvider.GetService(validatorType) as IValidator;
 
