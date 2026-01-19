@@ -4,16 +4,12 @@ import { cn } from "@/lib/utils";
 import {
   Code2,
   Database,
-  GitBranch,
   Terminal,
   LucideIcon,
   Blocks,
-  Braces,
-  Bug,
   FileCode2,
   Github,
   Container,
-  Webhook,
   PackageOpen,
   Globe2,
 } from "lucide-react";
@@ -149,6 +145,7 @@ export function CircuitPulse({
                     ? "left-[30%] top-[30%]"
                     : "left-[30%] top-[30%]",
             )}
+            // @ts-expect-error - framer-motion variants type compatibility
             variants={
               i < 2
                 ? pulseVariants.dot1
