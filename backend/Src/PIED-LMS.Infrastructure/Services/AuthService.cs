@@ -248,7 +248,7 @@ public sealed class AuthService(
 
             return principal;
         }
-        catch
+        catch (SecurityTokenException)
         {
             return null;
         }
