@@ -6,23 +6,19 @@ services:
     container_name: pied-lms-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-piedlms}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Map trực tiếp từ biến Doppler cung cấp
+      POSTGRES_DB: ${DATABASE__NAME:-piedlms}
+      POSTGRES_USER: ${DATABASE__USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - pied-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   backend:
     image: ${DOCKERHUB_USERNAME}/pied-lms-backend:latest
@@ -34,27 +30,20 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${DATABASE__NAME};Username=${DATABASE__USER};Password=${DATABASE__PASSWORD}"
+      DATABASE__HOST: postgres
+      DATABASE__PORT: 5432
+      DATABASE__NAME: ${DATABASE__NAME}
+      DATABASE__USER: ${DATABASE__USER}
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - pied-network
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
 volumes:
   postgres_data:
-    driver: local
-
 networks:
   pied-network:
     driver: bridge
