@@ -1,4 +1,12 @@
 import { CircuitBackground } from "@/components/CircuitBackground"
+import { CornerModule } from "@/components/CornerModule"
+
+const CORNER_POSITIONS = [
+  "top-4 left-4",
+  "top-4 right-4",
+  "bottom-4 left-4",
+  "bottom-4 right-4",
+] as const
 
 export default function AuthLayout({
   children,
@@ -10,46 +18,9 @@ export default function AuthLayout({
       {/* Circuit board background pattern */}
       <div className="absolute inset-0">
         {/* Corner modules */}
-        <div className="absolute top-4 left-4 h-16 w-16 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-          <div className="grid h-full w-full grid-cols-3 gap-1">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-2 w-2 rounded-full bg-blue-500/30"
-              />
-            ))}
-          </div>
-        </div>
-        <div className="absolute top-4 right-4 h-16 w-16 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-          <div className="grid h-full w-full grid-cols-3 gap-1">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-2 w-2 rounded-full bg-blue-500/30"
-              />
-            ))}
-          </div>
-        </div>
-        <div className="absolute bottom-4 left-4 h-16 w-16 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-          <div className="grid h-full w-full grid-cols-3 gap-1">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-2 w-2 rounded-full bg-blue-500/30"
-              />
-            ))}
-          </div>
-        </div>
-        <div className="absolute bottom-4 right-4 h-16 w-16 rounded border border-zinc-800 bg-zinc-900/50 p-2">
-          <div className="grid h-full w-full grid-cols-3 gap-1">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-2 w-2 rounded-full bg-blue-500/30"
-              />
-            ))}
-          </div>
-        </div>
+        {CORNER_POSITIONS.map((position) => (
+          <CornerModule key={position} position={position} />
+        ))}
 
         {/* Circuit lines connecting modules */}
         <div className="absolute inset-0 pointer-events-none">

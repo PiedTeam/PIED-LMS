@@ -41,26 +41,36 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Mail
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                aria-hidden="true"
+              />
               <Input
                 type="email"
+                id="email"
                 placeholder="email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10 border-zinc-700 bg-zinc-800/50 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+                aria-label="Email address"
                 required
               />
             </div>
           </div>
           <div className="space-y-2">
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Lock
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                aria-hidden="true"
+              />
               <Input
                 type="password"
+                id="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 border-zinc-700 bg-zinc-800/50 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+                aria-label="Password"
                 required
               />
             </div>
@@ -85,22 +95,27 @@ export default function LoginPage() {
             type="button"
             variant="outline"
             className="aspect-square h-12 w-full border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50 p-0"
+            aria-label="Sign in with Apple"
           >
-            <Apple className="h-5 w-5 text-white" />
+            <Apple className="h-5 w-5 text-white" aria-hidden="true" />
           </Button>
           <Button
             type="button"
             variant="outline"
             className="aspect-square h-12 w-full border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50 p-0"
+            aria-label="Sign in with Google"
           >
-            <Chrome className="h-5 w-5 text-white" />
+            <Chrome className="h-5 w-5 text-white" aria-hidden="true" />
           </Button>
           <Button
             type="button"
             variant="outline"
             className="aspect-square h-12 w-full border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700/50 p-0"
+            aria-label="Sign in with X"
           >
-            <span className="text-lg font-bold text-white">X</span>
+            <span className="text-lg font-bold text-white" aria-hidden="true">
+              X
+            </span>
           </Button>
         </div>
       </CardContent>
