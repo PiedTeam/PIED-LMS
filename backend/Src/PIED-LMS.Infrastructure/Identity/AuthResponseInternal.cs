@@ -10,5 +10,5 @@ internal sealed record AuthResponseInternal
   public required string RefreshToken { get; init; }
   public required DateTime ExpiresAt { get; init; }
   public required string Email { get; init; }
-  public required string UserId { get; init; }
+  public required Guid UserId { get; init; }
 }

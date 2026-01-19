@@ -72,7 +72,7 @@ public sealed class AuthService(
             return Result<AuthResponse>.Failure("AUTH_REGISTRATION_FAILED", errors);
         }
 
-        var authResponseInternal = await GenerateAuthResponseAsync(appUser, noSave: true, cancellationToken);
+        var authResponseInternal = await GenerateAuthResponseAsync(appUser, cancellationToken: cancellationToken);
         StoreRefreshTokenInContext(authResponseInternal.RefreshToken);
 
         var authResponse = new AuthResponse
@@ -80,7 +80,7 @@ public sealed class AuthService(
             AccessToken = authResponseInternal.AccessToken,
             ExpiresAt = authResponseInternal.ExpiresAt,
             Email = authResponseInternal.Email,
-            UserId = authResponseInternal.UserId
+            UserId = authResponseInternal.UserId.ToString()
         };
         return Result<AuthResponse>.Success(authResponse);
     }
@@ -108,7 +108,7 @@ public sealed class AuthService(
             AccessToken = authResponseInternal.AccessToken,
             ExpiresAt = authResponseInternal.ExpiresAt,
             Email = authResponseInternal.Email,
-            UserId = authResponseInternal.UserId
+            UserId = authResponseInternal.UserId.ToString()
         };
         return Result<AuthResponse>.Success(authResponse);
     }
@@ -171,7 +171,7 @@ public sealed class AuthService(
             AccessToken = authResponseInternal.AccessToken,
             ExpiresAt = authResponseInternal.ExpiresAt,
             Email = authResponseInternal.Email,
-            UserId = authResponseInternal.UserId
+            UserId = authResponseInternal.UserId.ToString()
         };
         return Result<AuthResponse>.Success(authResponse);
     }
@@ -190,11 +190,6 @@ public sealed class AuthService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
-    }
-
-    public async Task<string?> GetLatestRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        return await Task.FromResult<string?>(null);
     }
 
     private static string HashRefreshToken(string token, string secretKey)
@@ -231,7 +226,7 @@ public sealed class AuthService(
             RefreshToken = refreshToken,
             ExpiresAt = expiresAt,
             Email = user.Email!,
-            UserId = user.Id.ToString()
+            UserId = user.Id
         };
     }
 

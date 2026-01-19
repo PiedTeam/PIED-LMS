@@ -16,5 +16,4 @@ public interface IAuthService
         CancellationToken cancellationToken = default);
 
     Task<Result> LogoutAsync(string userId, CancellationToken cancellationToken = default);
-    Task<string?> GetLatestRefreshTokenAsync(Guid userId, CancellationToken cancellationToken = default);
 }
