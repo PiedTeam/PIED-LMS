@@ -8,6 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\PIED-LMS.Domain\PIED-LMS.Domain.csproj"/>
     </ItemGroup>
 
