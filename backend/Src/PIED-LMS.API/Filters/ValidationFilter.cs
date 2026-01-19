@@ -13,7 +13,7 @@ public sealed class ValidationFilter(IServiceProvider serviceProvider) : IAsyncA
             if (validator is not null)
             {
                 context.ActionArguments.TryGetValue(parameter.Name!, out var value);
-                var validationContext = new ValidationContext<object>(value);
+                var validationContext = new ValidationContext<object>(value!);
                 var validationResult = await validator.ValidateAsync(validationContext, context.HttpContext.RequestAborted);
 
                 if (!validationResult.IsValid)

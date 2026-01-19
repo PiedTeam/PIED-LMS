@@ -68,7 +68,6 @@ public class AuthController(
                 }
             });
 
-        logger.LogInformation("User registered successfully, setting refresh token cookie");
         TrySetRefreshTokenCookie();
 
         return Ok(result);
@@ -84,7 +83,6 @@ public class AuthController(
         if (!Request.Cookies.TryGetValue(_refreshTokenCookieName, out var refreshToken) ||
             string.IsNullOrEmpty(refreshToken))
         {
-            logger.LogWarning("Refresh token not found in cookie");
             return Unauthorized(new ProblemDetails
             {
                 Status = StatusCodes.Status401Unauthorized,
