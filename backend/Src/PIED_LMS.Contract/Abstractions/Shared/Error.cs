@@ -28,7 +28,12 @@ public class Error(string code, string message) : IEquatable<Error>
 
     public static bool operator !=(Error? a, Error? b) => !(a == b);
 
-    public override bool Equals(object? obj) => obj is Error error && obj.Equals(error);
+    public override bool Equals(object? obj)
+    {
+        if (obj is null) return false;
+
+        return obj is Error error && Equals(error);
+    }
 
     public override int GetHashCode() => HashCode.Combine(Code, Message);
 

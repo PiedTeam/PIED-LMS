@@ -4,9 +4,9 @@ public class HealthApi : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/health", async (HealthCheckService healthCheckService) =>
+        app.MapGet("/health", async (HealthCheckService healthCheckService, CancellationToken cancellationToken) =>
             {
-                var report = await healthCheckService.CheckHealthAsync();
+                var report = await healthCheckService.CheckHealthAsync(cancellationToken);
 
                 var response = new
                 {
@@ -23,9 +23,16 @@ public class HealthApi : ICarterModule
 
                 return report.Status == HealthStatus.Healthy
                     ? Results.Ok(response)
-                    : Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+                    : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
             })
             .WithTags("Health")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .WithMetadata(new ResponseCacheAttribute
+            {
+                Duration = 10,
+                Location = ResponseCacheLocation.Any,
+                NoStore = false
+            })
+            .RequireRateLimiting("health-policy");
     }
 }
