@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PIED_LMS.Application\PIED_LMS.Application.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Carter"/>
+    </ItemGroup>
+
+</Project>

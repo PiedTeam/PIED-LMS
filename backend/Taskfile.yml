@@ -2,8 +2,8 @@ version: "3"
 
 vars:
   DOPPLER: "doppler run --"
-  API_PROJECT: "Src/PIED-LMS.API/PIED-LMS.API.csproj"
-  INFRA_PROJECT: "Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj"
+  API_PROJECT: "Src/PIED_LMS.API/PIED_LMS.API.csproj"
+  INFRA_PROJECT: "Src/PIED_LMS.Infrastructure/PIED_LMS.Infrastructure.csproj"
 
 tasks:
   dev:
