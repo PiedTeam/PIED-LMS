@@ -1,45 +1,35 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
+WORKDIR /app
+EXPOSE 8080
+USER app
 
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copy project files
-COPY ["Src/PIED_LMS.API/PIED_LMS.API.csproj", "Src/PIED_LMS.API/"]
-COPY ["Src/PIED_LMS.Application/PIED_LMS.Application.csproj", "Src/PIED_LMS.Application/"]
-COPY ["Src/PIED_LMS.Contract/PIED_LMS.Contract.csproj", "Src/PIED_LMS.Contract/"]
-COPY ["Src/PIED_LMS.Domain/PIED_LMS.Domain.csproj", "Src/PIED_LMS.Domain/"]
-COPY ["Src/PIED_LMS.Infrastructure/PIED_LMS.Infrastructure.csproj", "Src/PIED_LMS.Infrastructure/"]
-COPY ["Src/PIED_LMS.Persistence/PIED_LMS.Persistence.csproj", "Src/PIED_LMS.Persistence/"]
-COPY ["Src/PIED_LMS.Presentation/PIED_LMS.Presentation.csproj", "Src/PIED_LMS.Presentation/"]
+COPY ["Src/*/*.csproj", "Directory.Build.props", "Directory.Packages.props", "global.json", "./"]
+RUN for file in $(ls *.csproj); do mkdir -p Src/${file%.*}/ && mv $file Src/${file%.*}/; done
 
-# Copy build props
-COPY ["Directory.Build.props", "./"]
-COPY ["Directory.Packages.props", "./"]
-COPY ["global.json", "./"]
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
 
-# Restore dependencies
-RUN dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
-
-# Copy source code
+# Copy toàn bộ code
 COPY . .
 
-# Build the application
-RUN dotnet build "Src/PIED_LMS.API/PIED_LMS.API.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    /p:UseAppHost=false \
+    --no-restore
 
-# Publish stage
-FROM build AS publish
-RUN dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
-
+    FROM base AS final
 WORKDIR /app
+COPY --from=build /app/publish .
 
-COPY --from=publish /app/publish .
-
-EXPOSE 8080
-
-ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+RUN apk add --no-cache icu-libs
 
 ENTRYPOINT ["dotnet", "PIED_LMS.API.dll"]
