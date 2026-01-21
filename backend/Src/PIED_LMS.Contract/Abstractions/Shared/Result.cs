@@ -5,7 +5,9 @@ public class Result
     protected Result(bool isSuccess, Error error)
     {
         if ((isSuccess && error != Error.None) || (!isSuccess && error == Error.None))
-            throw new InvalidOperationException();
+            throw new InvalidOperationException(
+                $"Invalid Result: when IsSuccess is true Error must be Error.None; when IsSuccess is false Error must not be Error.None. Provided IsSuccess={isSuccess}, Error={error}"
+            );
 
         IsSuccess = isSuccess;
         Error = error;

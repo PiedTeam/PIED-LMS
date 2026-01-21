@@ -1,6 +1,6 @@
 namespace PIED_LMS.Contract.Abstractions.Shared;
 
-public class Error(string code, string message) : IEquatable<Error>
+public sealed class Error(string code, string message) : IEquatable<Error>
 {
     public static readonly Error None = new(string.Empty, string.Empty);
 
@@ -15,7 +15,8 @@ public class Error(string code, string message) : IEquatable<Error>
         return Code == other.Code && Message == other.Message;
     }
 
-    public static implicit operator string(Error error) => error.Code;
+    /// <summary>Explicitly converts an Error to its Code.</summary>
+    public static explicit operator string(Error error) => error.Code;
 
     public static bool operator ==(Error? a, Error? b)
     {
@@ -30,12 +31,15 @@ public class Error(string code, string message) : IEquatable<Error>
 
     public override bool Equals(object? obj)
     {
+        if (ReferenceEquals(this, obj)) return true;
         if (obj is null) return false;
+        if (obj.GetType() != GetType()) return false;
 
-        return obj is Error error && Equals(error);
+        return Equals((Error)obj);
     }
 
     public override int GetHashCode() => HashCode.Combine(Code, Message);
 
+    /// <summary>Returns the error code.</summary>
     public override string ToString() => Code;
 }

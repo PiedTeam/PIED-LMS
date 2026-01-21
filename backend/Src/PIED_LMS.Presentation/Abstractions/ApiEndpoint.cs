@@ -4,13 +4,13 @@ namespace PIED_LMS.Presentation.Abstractions;
 
 public abstract class ApiEndpoint
 {
-    protected static IResult HandlerFailure(Result result)
+    protected static IResult HandleFailure(Result result)
     {
         return result switch
         {
             { IsSuccess: true } => throw new InvalidOperationException(),
             IValidationResult validationResult =>
-                Results.BadRequest(
+                Results.UnprocessableEntity(
                     CreateProblemDetails(
                         "Validation Error", StatusCodes.Status422UnprocessableEntity,
                         result.Error,
@@ -31,7 +31,9 @@ public abstract class ApiEndpoint
             Type = error.Code,
             Detail = error.Message,
             Status = status,
-            Extensions = { { nameof(errors), errors } }
+            Extensions = errors is null
+                ? new Dictionary<string, object?>()
+                : new Dictionary<string, object?> { { nameof(errors), errors } }
         };
     }
 }
