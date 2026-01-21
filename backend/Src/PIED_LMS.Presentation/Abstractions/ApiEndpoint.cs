@@ -8,7 +8,7 @@ public abstract class ApiEndpoint
     {
         return result switch
         {
-            { IsSuccess: true } => throw new InvalidOperationException(),
+            { IsSuccess: true } => throw new InvalidOperationException("HandleFailure received a successful result; IsSuccess==true is unexpected in ApiEndpoint failure handling."),
             IValidationResult validationResult =>
                 Results.UnprocessableEntity(
                     CreateProblemDetails(
