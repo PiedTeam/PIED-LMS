@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
 WORKDIR /app
 EXPOSE 8080
+# Install ICU libs before switching to non-root user
+RUN apk add --no-cache icu-libs
 USER app
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
@@ -24,12 +26,11 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     --no-restore
 
 
-    FROM base AS final
+FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-RUN apk add --no-cache icu-libs
 
 ENTRYPOINT ["dotnet", "PIED_LMS.API.dll"]
