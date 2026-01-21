@@ -11,10 +11,9 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         CancellationToken cancellationToken
     )
     {
-        logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
-
         var statusCode = exception switch
         {
+            OperationCanceledException => 499,  // Client Closed Request
             IdentityException.TokenException => StatusCodes.Status401Unauthorized,
             BadRequestException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
@@ -23,6 +22,19 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             FormatException => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError
         };
+
+        // Log based on status code: skip 499 (client disconnect), 4xx as Warning, 5xx as Error
+        if (statusCode != 499)
+        {
+            if (statusCode >= 500)
+            {
+                logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
+            }
+            else
+            {
+                logger.LogWarning(exception, "A client error occurred: {Message}", exception.Message);
+            }
+        }
 
         var problemDetails = new ProblemDetails
         {
