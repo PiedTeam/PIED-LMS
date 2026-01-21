@@ -8,4 +8,4 @@ public sealed class ValidationException(IReadOnlyCollection<ValidationError> err
     public IReadOnlyCollection<ValidationError> Errors { get; } = errors;
 }
 
-public record ValidationError(string PropertyName, string ErrorMessage);
+public abstract record ValidationError(string PropertyName, string ErrorMessage);

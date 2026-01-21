@@ -1,0 +1,62 @@
+using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Application.Options;
+
+namespace PIED_LMS.Infrastructure.Authentication;
+
+public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
+{
+    private readonly JwtOption _jwtOption = configuration.GetSection("JwtSettings").Get<JwtOption>() ??
+                                            throw new InvalidOperationException("Jwt configuration is missing");
+
+    public string GenerateAccessToken(IEnumerable<Claim> claims)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.Secret));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            _jwtOption.Issuer,
+            _jwtOption.Audience,
+            claims,
+            expires: DateTime.UtcNow.AddMinutes(_jwtOption.ExpiryMinutes),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    public (ClaimsPrincipal, bool) GetPrincipalFromExpiredToken(string token)
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.Secret)),
+            ValidateLifetime = false
+        };
+
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
+                    StringComparison.InvariantCultureIgnoreCase))
+                return (null!, false);
+
+            return (principal, true);
+        }
+        catch
+        {
+            return (null!, false);
+        }
+    }
+}

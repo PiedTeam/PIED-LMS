@@ -8,7 +8,8 @@ public abstract class ApiEndpoint
     {
         return result switch
         {
-            { IsSuccess: true } => throw new InvalidOperationException("HandleFailure received a successful result; IsSuccess==true is unexpected in ApiEndpoint failure handling."),
+            { IsSuccess: true } => throw new InvalidOperationException(
+                "HandleFailure received a successful result; IsSuccess==true is unexpected in ApiEndpoint failure handling."),
             IValidationResult validationResult =>
                 Results.UnprocessableEntity(
                     CreateProblemDetails(
@@ -32,7 +33,7 @@ public abstract class ApiEndpoint
             Detail = error.Message,
             Status = status,
             Extensions = errors is null
-                ? new Dictionary<string, object?>()
+                ? []
                 : new Dictionary<string, object?> { { nameof(errors), errors } }
         };
     }

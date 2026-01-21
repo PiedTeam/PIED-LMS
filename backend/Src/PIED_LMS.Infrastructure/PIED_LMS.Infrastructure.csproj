@@ -26,6 +26,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\PIED_LMS.Application\PIED_LMS.Application.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Persistence\PIED_LMS.Persistence.csproj"/>
     </ItemGroup>
 
 </Project>

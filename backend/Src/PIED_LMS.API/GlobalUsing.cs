@@ -9,3 +9,4 @@ global using Microsoft.AspNetCore.RateLimiting;
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using Microsoft.IdentityModel.Tokens;
 global using Microsoft.OpenApi;
+global using Swashbuckle.AspNetCore.SwaggerGen;
