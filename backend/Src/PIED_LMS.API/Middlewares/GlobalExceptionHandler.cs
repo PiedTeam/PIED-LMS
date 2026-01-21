@@ -15,9 +15,12 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
 
         var statusCode = exception switch
         {
+            IdentityException.TokenException => StatusCodes.Status401Unauthorized,
             BadRequestException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
+            Application.Exceptions.ValidationException => StatusCodes.Status422UnprocessableEntity,
             ValidationException => StatusCodes.Status422UnprocessableEntity,
+            FormatException => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError
         };
 
