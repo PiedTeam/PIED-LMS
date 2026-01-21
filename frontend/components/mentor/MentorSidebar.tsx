@@ -26,27 +26,27 @@ import {
 const menuItems = [
 	{
 		title: 'Dashboard',
-		href: '/mentor',
+		href: '/dashboard',
 		icon: LayoutDashboard
 	},
 	{
 		title: 'Timetables',
-		href: '/mentor/timetables',
+		href: '/timetables',
 		icon: CalendarSearch
 	},
 	{
 		title: 'Students',
-		href: '/mentor/students',
+		href: '/students',
 		icon: Users
 	},
 	{
 		title: 'Slot Advice',
-		href: '/mentor/slot-advice',
+		href: '/slot-advice',
 		icon: Lightbulb
 	},
 	{
 		title: 'History',
-		href: '/mentor/history',
+		href: '/history',
 		icon: History
 	}
 ]
@@ -84,7 +84,7 @@ export function MentorSidebar() {
 						const Icon = item.icon
 						const isActive =
 							pathname === item.href ||
-							(pathname.startsWith(item.href) && item.href !== '/mentor')
+							(pathname.startsWith(item.href) && item.href !== '/dashboard')
 
 						return (
 							<Link
@@ -133,7 +133,7 @@ export function MentorSidebar() {
 							</div>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem asChild>
-								<Link href="/mentor/profile" className="flex items-center gap-2">
+								<Link href="/profile" className="flex items-center gap-2">
 									<User className="h-4 w-4" />
 									<span>Profile</span>
 								</Link>

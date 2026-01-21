@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
-export default function MentorDashboardPage() {
+export function MentorDashboard() {
 	return (
 		<div className="p-6 space-y-6">
 			<div className="flex items-start justify-between gap-4">
@@ -14,15 +14,16 @@ export default function MentorDashboardPage() {
 						Mentor Dashboard
 					</h1>
 					<p className="text-sm text-muted-foreground">
-						Quick access to timetable analysis, students, slot advice, and history.
+						Quick access to timetable analysis, students, slot advice, and
+						history.
 					</p>
 				</div>
 				<div className="flex gap-2">
 					<Button asChild variant="outline">
-						<Link href="/mentor/timetables">Open Timetables</Link>
+						<Link href="/timetables">Open Timetables</Link>
 					</Button>
 					<Button asChild>
-						<Link href="/mentor/students">Find Student</Link>
+						<Link href="/students">Find Student</Link>
 					</Button>
 				</div>
 			</div>

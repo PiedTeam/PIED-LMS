@@ -3,11 +3,11 @@
 import { useGetProfile } from '@/service/student/profile.service'
 import { ProfileView } from '@/components/student/ProfileView'
 
-export default function StudentProfilePage() {
+export function StudentProfile() {
 	const { data: profile, isLoading, error } = useGetProfile()
 
 	return (
-		<div className="container mx-auto p-4 max-w-4xl">
+		<div className="container mx-auto max-w-4xl p-4">
 			<div className="mb-6">
 				<h1 className="text-2xl font-bold">My Profile</h1>
 				<p className="mt-2 text-muted-foreground">
@@ -18,3 +18,4 @@ export default function StudentProfilePage() {
 		</div>
 	)
 }
+

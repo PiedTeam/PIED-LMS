@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-export default function MentorProfilePage() {
+export function MentorProfile() {
 	const user = useAuthStore(state => state.user)
 
 	return (
