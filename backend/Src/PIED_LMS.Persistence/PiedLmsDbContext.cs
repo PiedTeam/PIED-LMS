@@ -16,7 +16,7 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
     {
         base.OnModelCreating(modelBuilder);
 
-        // Enable PostgreSQL extension for UUIDv7
+        // Enable PostgreSQL extension for UUID generation (uuid-ossp provides v1/v3/v4/v5)
         modelBuilder.HasPostgresExtension("uuid-ossp");
 
         // Apply all configurations from the assembly

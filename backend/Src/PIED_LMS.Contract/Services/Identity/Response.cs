@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Base Response
@@ -46,7 +48,8 @@ public record LoginResponse(
 
 // Refresh Token Response
 public record RefreshTokenResponse(
-    string AccessToken
+    string AccessToken,
+    [property: JsonIgnore] string RefreshToken
 );
 
 // Token Response

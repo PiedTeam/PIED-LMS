@@ -32,7 +32,8 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     public Task<bool> RevokeRefreshTokenAsync(string refreshToken)
     {
         var cacheKey = $"{_cacheKeyPrefix}{refreshToken}";
-        _memoryCache.Remove(cacheKey);
-        return Task.FromResult(true);
+        var existed = _memoryCache.TryGetValue<Guid>(cacheKey, out _);
+        if (existed) _memoryCache.Remove(cacheKey);
+        return Task.FromResult(existed);
     }
 }

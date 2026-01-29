@@ -1,12 +1,12 @@
+using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 
 namespace PIED_LMS.Infrastructure.Authentication;
 
-public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
+public class JwtTokenService(IOptions<JwtOption> options) : IJwtTokenService
 {
-    private readonly JwtOption _jwtOption = configuration.GetSection("JwtSettings").Get<JwtOption>() ??
-                                            throw new InvalidOperationException("Jwt configuration is missing");
+    private readonly JwtOption _jwtOption = options.Value;
 
     public string GenerateAccessToken(IEnumerable<Claim> claims)
     {
@@ -35,11 +35,13 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false,
-            ValidateIssuer = false,
+            ValidateAudience = true,
+            ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.Secret)),
-            ValidateLifetime = false
+            ValidateLifetime = false,
+            ValidIssuer = _jwtOption.Issuer,
+            ValidAudience = _jwtOption.Audience
         };
 
         try

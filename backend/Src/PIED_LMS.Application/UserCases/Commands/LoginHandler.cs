@@ -8,7 +8,8 @@ public class LoginCommandHandler(
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwtTokenService,
     IRefreshTokenService refreshTokenService,
-    IConfiguration configuration
+    IConfiguration configuration,
+    ILogger<LoginCommandHandler> logger
 ) : IRequestHandler<LoginCommand, ServiceResponse<LoginResult>>
 {
     private readonly int _refreshTokenExpirationDays =
@@ -23,7 +24,7 @@ public class LoginCommandHandler(
                 return new ServiceResponse<LoginResult>(false, "Invalid email or password");
 
             if (!user.IsActive)
-                return new ServiceResponse<LoginResult>(false, "User account is inactive");
+                return new ServiceResponse<LoginResult>(false, "Invalid email or password");
 
             var passwordValid = await userManager.CheckPasswordAsync(user, request.Password);
             if (!passwordValid)
@@ -57,7 +58,8 @@ public class LoginCommandHandler(
         }
         catch (Exception ex)
         {
-            return new ServiceResponse<LoginResult>(false, $"Login failed: {ex.Message}");
+            logger.LogError(ex, "Login failed for email {Email}", request.Email);
+            return new ServiceResponse<LoginResult>(false, "Login failed");
         }
     }
 }

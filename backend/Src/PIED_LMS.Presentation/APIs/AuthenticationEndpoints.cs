@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Presentation.APIs;
@@ -98,7 +97,7 @@ public class AuthenticationEndpoints : ICarterModule
             Secure = secureCookie,
             SameSite = SameSiteMode.Lax, // Changed from Strict to Lax for better compatibility
             Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/"
+            Path = "/api/auth/refresh"
         };
 
         context.Response.Cookies.Append("refreshToken", loginResult.RefreshToken, cookieOptions);
@@ -116,7 +115,9 @@ public class AuthenticationEndpoints : ICarterModule
     private static async Task<IResult> RefreshToken(
         HttpContext context,
         IMediator mediator,
-        ILogger<AuthenticationEndpoints> logger)
+        ILogger<AuthenticationEndpoints> logger,
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
         // Get refresh token from cookie
         var refreshToken = context.Request.Cookies["refreshToken"];
@@ -137,14 +138,27 @@ public class AuthenticationEndpoints : ICarterModule
             return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
         }
 
+        // Update refresh token cookie
+        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = secureCookie,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
+            Path = "/api/auth/refresh"
+        };
+
+        context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
+
         // Return new access token
         return Results.Ok(result);
     }
 
     private static async Task<IResult> Logout(
         HttpContext context,
-        IMediator mediator,
-        IRefreshTokenService refreshTokenService)
+        IMediator mediator)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
@@ -152,12 +166,11 @@ public class AuthenticationEndpoints : ICarterModule
 
         // Get refresh token from cookie and revoke it
         var refreshToken = context.Request.Cookies["refreshToken"];
-        if (!string.IsNullOrEmpty(refreshToken)) await refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
 
         // Delete refresh token cookie
-        context.Response.Cookies.Delete("refreshToken");
+        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
 
-        var command = new LogoutCommand(userId);
+        var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
         var result = await mediator.Send(command);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }

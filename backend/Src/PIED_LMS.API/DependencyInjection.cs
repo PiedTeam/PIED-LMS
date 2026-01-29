@@ -1,5 +1,6 @@
 using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
+using PIED_LMS.Application.Options;
 
 namespace PIED_LMS.API;
 
@@ -7,6 +8,11 @@ public static class InfrastructureExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddOptions<JwtOption>()
+            .Bind(configuration.GetSection("JwtSettings"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // 1. Swagger with JWT Bearer Authentication
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>

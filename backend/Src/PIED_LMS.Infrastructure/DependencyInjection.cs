@@ -1,4 +1,5 @@
 using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Persistence;
@@ -53,6 +54,7 @@ public static class PersistenceExtensions
             .AddEntityFrameworkStores<PiedLmsDbContext>()
             .AddDefaultTokenProviders();
 
+        services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddMemoryCache();

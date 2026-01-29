@@ -3,7 +3,7 @@ using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries;
 
-public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager)
+public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, ILogger<GetUserByIdQueryHandler> logger)
     : IRequestHandler<GetUserByIdQuery, ServiceResponse<UserResponse>>
 {
     public async Task<ServiceResponse<UserResponse>> Handle(GetUserByIdQuery request,
@@ -30,7 +30,8 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager)
         }
         catch (Exception ex)
         {
-            return new ServiceResponse<UserResponse>(false, $"Failed to retrieve user: {ex.Message}");
+            logger.LogError(ex, "Failed to retrieve user {UserId}", request.UserId);
+            return new ServiceResponse<UserResponse>(false, "Failed to retrieve user");
         }
     }
 }

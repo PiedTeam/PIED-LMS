@@ -4,7 +4,8 @@ using PIED_LMS.Domain.Entities;
 namespace PIED_LMS.Application.UserCases.Commands;
 
 public class RegisterCommandHandler(
-    UserManager<ApplicationUser> userManager
+    UserManager<ApplicationUser> userManager,
+    ILogger<RegisterCommandHandler> logger
 ) : IRequestHandler<RegisterCommand, ServiceResponse<RegisterResponse>>
 {
     public async Task<ServiceResponse<RegisterResponse>> Handle(RegisterCommand request,
@@ -37,7 +38,15 @@ public class RegisterCommandHandler(
             }
 
             // Assign default Student role
-            await userManager.AddToRoleAsync(user, "Student");
+            var roleResult = await userManager.AddToRoleAsync(user, "Student");
+            if (!roleResult.Succeeded)
+            {
+                var roleErrors = roleResult.Errors.ToDictionary(
+                    x => x.Code,
+                    x => new[] { x.Description }
+                );
+                return new ServiceResponse<RegisterResponse>(false, "Registration failed", null, roleErrors);
+            }
 
             var response = new RegisterResponse(
                 user.Id,
@@ -50,7 +59,8 @@ public class RegisterCommandHandler(
         }
         catch (Exception ex)
         {
-            return new ServiceResponse<RegisterResponse>(false, $"Registration failed: {ex.Message}");
+            logger.LogError(ex, "Registration failed for email {Email}", request.Email);
+            return new ServiceResponse<RegisterResponse>(false, "Registration failed");
         }
     }
 }

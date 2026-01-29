@@ -1,9 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries;
 
-public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager)
+public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, ILogger<GetAllUsersQueryHandler> logger)
     : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserResponse>>>
 {
     public async Task<ServiceResponse<PaginatedResponse<UserResponse>>> Handle(GetAllUsersQuery request,
@@ -11,11 +12,11 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager)
     {
         try
         {
-            var totalCount = userManager.Users.Count();
-            var users = userManager.Users
+            var totalCount = await userManager.Users.CountAsync(cancellationToken);
+            var users = await userManager.Users
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .ToList();
+                .ToListAsync(cancellationToken);
 
             var userResponses = new List<UserResponse>();
             foreach (var user in users)
@@ -44,8 +45,9 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager)
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to retrieve users");
             return new ServiceResponse<PaginatedResponse<UserResponse>>(false,
-                $"Failed to retrieve users: {ex.Message}");
+                "Failed to retrieve users");
         }
     }
 }
