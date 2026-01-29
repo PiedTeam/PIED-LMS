@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
+using TokenValidationResult = PIED_LMS.Application.Abstractions.TokenValidationResult;
 
 namespace PIED_LMS.Infrastructure.Authentication;
 
