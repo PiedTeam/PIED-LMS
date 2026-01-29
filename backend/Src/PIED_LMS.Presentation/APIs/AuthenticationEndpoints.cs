@@ -112,7 +112,8 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> RefreshToken(
         HttpContext context,
-        IMediator mediator)
+        IMediator mediator,
+        ILogger<AuthenticationEndpoints> logger)
     {
         // Get refresh token from cookie
         var refreshToken = context.Request.Cookies["refreshToken"];
@@ -123,16 +124,19 @@ public class AuthenticationEndpoints : ICarterModule
                 $"{c.Key}={c.Value?.Substring(0, Math.Min(20, c.Value?.Length ?? 0))}..."));
 
         if (string.IsNullOrEmpty(refreshToken))
-            // Return more detailed error
-            return Results.Json(new { error = "Refresh token not found in cookie", cookies = allCookies },
-                statusCode: 401);
+        {
+            logger.LogWarning("Refresh token missing in cookie. Cookies: {Cookies}", allCookies);
+            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        }
 
         var command = new RefreshTokenCommand(refreshToken);
         var result = await mediator.Send(command);
 
         if (!result.Success || result.Data == null)
-            // Return error message for debugging
-            return Results.Json(new { error = result.Message ?? "Invalid refresh token" }, statusCode: 401);
+        {
+            logger.LogWarning("Refresh token request failed: {Message}", result.Message);
+            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        }
 
         // Return new access token
         return Results.Ok(result);
