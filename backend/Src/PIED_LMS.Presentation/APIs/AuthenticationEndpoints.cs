@@ -77,7 +77,8 @@ public class AuthenticationEndpoints : ICarterModule
         LoginCommand request,
         IMediator mediator,
         HttpContext context,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
         var result = await mediator.Send(request);
 
@@ -89,10 +90,11 @@ public class AuthenticationEndpoints : ICarterModule
 
         // Set refresh token in HttpOnly cookie
         var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, // Set to false for development (localhost), set to true in production
+            Secure = secureCookie,
             SameSite = SameSiteMode.Lax, // Changed from Strict to Lax for better compatibility
             Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
             Path = "/"
