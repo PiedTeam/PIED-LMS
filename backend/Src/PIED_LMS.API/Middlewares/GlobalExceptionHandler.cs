@@ -43,9 +43,11 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         switch (exception)
         {
             case ValidationException appValEx:
+                problemDetails.Title = "Validation Error";
                 problemDetails.Extensions["errors"] = appValEx.Errors;
                 break;
             case FluentValidation.ValidationException fluentValEx:
+                problemDetails.Title = "Validation Error";
                 problemDetails.Extensions["errors"] = fluentValEx.Errors;
                 break;
         }
