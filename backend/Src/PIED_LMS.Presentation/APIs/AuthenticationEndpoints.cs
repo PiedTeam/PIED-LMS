@@ -118,14 +118,10 @@ public class AuthenticationEndpoints : ICarterModule
         // Get refresh token from cookie
         var refreshToken = context.Request.Cookies["refreshToken"];
 
-        // Debug: Log all cookies
-        var allCookies = string.Join(", ",
-            context.Request.Cookies.Select(c =>
-                $"{c.Key}={c.Value?.Substring(0, Math.Min(20, c.Value?.Length ?? 0))}..."));
-
         if (string.IsNullOrEmpty(refreshToken))
         {
-            logger.LogWarning("Refresh token missing in cookie. Cookies: {Cookies}", allCookies);
+            logger.LogWarning("Refresh token missing in cookie. HasRefreshTokenCookie: {HasCookie}",
+                context.Request.Cookies.ContainsKey("refreshToken"));
             return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
         }
 
