@@ -12,8 +12,10 @@ public class SecurityRequirementsOperationFilter : IOperationFilter
     {
         // Get endpoint path
         var path = context.ApiDescription.RelativePath;
+        var normalizedPath = path?.Split('?', '#')[0].TrimStart('/');
 
         // Remove security requirement for public endpoints
-        if (_publicEndpoints.Contains(path, StringComparer.OrdinalIgnoreCase)) operation.Security = null;
+        if (normalizedPath is not null && _publicEndpoints.Contains(normalizedPath, StringComparer.OrdinalIgnoreCase))
+            operation.Security = null;
     }
 }

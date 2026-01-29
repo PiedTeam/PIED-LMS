@@ -40,7 +40,15 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             Type = exception.GetType().Name
         };
 
-        if (exception is FluentValidation.ValidationException valEx) problemDetails.Extensions["errors"] = valEx.Errors;
+        switch (exception)
+        {
+            case ValidationException appValEx:
+                problemDetails.Extensions["errors"] = appValEx.Errors;
+                break;
+            case FluentValidation.ValidationException fluentValEx:
+                problemDetails.Extensions["errors"] = fluentValEx.Errors;
+                break;
+        }
 
         httpContext.Response.StatusCode = statusCode;
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
