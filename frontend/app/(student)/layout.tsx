@@ -1,7 +1,19 @@
+'use client'
+
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { StudentSidebar } from '@/components/student/StudentSidebar'
+
 export default function StudentLayout({
-  children,
+	children
 }: {
-  children: React.ReactNode
+	children: React.ReactNode
 }) {
-  return <>{children}</>
+	return (
+		<ProtectedRoute requiredRole="USER">
+			<div className="flex min-h-screen">
+				<StudentSidebar />
+				<main className="flex-1 ml-64">{children}</main>
+			</div>
+		</ProtectedRoute>
+	)
 }
