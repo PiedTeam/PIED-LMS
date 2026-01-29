@@ -1,4 +1,6 @@
+using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
+using PIED_LMS.Application.Options;
 
 namespace PIED_LMS.API;
 
@@ -6,27 +8,35 @@ public static class InfrastructureExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // 1. Swagger
+        services.AddOptions<JwtOption>()
+            .Bind(configuration.GetSection("JwtSettings"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // 1. Swagger with JWT Bearer Authentication
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(options =>
+        services.AddSwaggerGen(c =>
         {
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "PIED LMS API", Version = "v1" });
+
+            // Define Bearer security scheme (ApiKey type)
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
+                Description = "JWT Authorization header. Enter: Bearer {your token}",
                 Name = "Authorization",
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "Enter your JWT token (without 'Bearer' prefix)"
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
             });
 
-            options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+            // Apply Bearer globally to all operations
+            c.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
             {
-                {
-                    new OpenApiSecuritySchemeReference("Bearer", null, null),
-                    new List<string>()
-                }
+                { new OpenApiSecuritySchemeReference("Bearer", doc), new List<string>() }
             });
+
+            // Remove security requirement for public endpoints (login, register)
+            c.OperationFilter<SecurityRequirementsOperationFilter>();
         });
 
         // 2. Exception Handling & Common Services
@@ -48,16 +58,14 @@ public static class InfrastructureExtensions
 
         // 4. Authentication & Authorization
         var jwtSettings = configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey missing.");
+        var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret missing.");
 
         services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
@@ -67,8 +75,7 @@ public static class InfrastructureExtensions
                 ValidAudience = jwtSettings["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 ClockSkew = TimeSpan.Zero
-            };
-        });
+            });
 
         services.AddAuthorization();
 
@@ -89,6 +96,7 @@ public static class InfrastructureExtensions
         {
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
         }
 
         app.MapCarter();
