@@ -31,7 +31,7 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
         return Convert.ToBase64String(randomNumber);
     }
 
-    public (ClaimsPrincipal, bool) GetPrincipalFromExpiredToken(string token)
+    public TokenValidationResult GetPrincipalFromExpiredToken(string token)
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
@@ -50,13 +50,13 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
             if (securityToken is not JwtSecurityToken jwtSecurityToken ||
                 !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
                     StringComparison.InvariantCultureIgnoreCase))
-                return (null!, false);
+                return new TokenValidationResult(null, false);
 
-            return (principal, true);
+            return new TokenValidationResult(principal, true);
         }
         catch
         {
-            return (null!, false);
+            return new TokenValidationResult(null, false);
         }
     }
 }

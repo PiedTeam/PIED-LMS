@@ -4,5 +4,7 @@ public interface IJwtTokenService
 {
     string GenerateAccessToken(IEnumerable<Claim> claims);
     string GenerateRefreshToken();
-    (ClaimsPrincipal, bool) GetPrincipalFromExpiredToken(string token);
+    TokenValidationResult GetPrincipalFromExpiredToken(string token);
 }
+
+public sealed record TokenValidationResult(ClaimsPrincipal? Principal, bool IsValid);
