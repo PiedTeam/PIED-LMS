@@ -24,7 +24,7 @@
         <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.0"/>
         <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0"/>
         <PackageVersion Include="Mapster" Version="7.4.0"/>
-        <PackageVersion Include="Mapster.DependencyInjection" Version="1.0.2"/>
+        <PackageVersion Include="Mapster.DependencyInjection" Version="1.0.1"/>
         <PackageVersion Include="MediatR" Version="12.2.0"/>
         <PackageVersion Include="UUIDNext" Version="1.0.0"/>
     </ItemGroup>

@@ -8,58 +8,28 @@ public class CompilerModule : ICarterModule
     {
         var group = app.MapGroup("/compiler").WithTags("Compiler");
 
-        group.MapPost("/compile", async (CompileRequest request, ISender sender, HttpContext context) =>
+        group.MapPost("/compile", async (CompileRequest request, IMapper mapper, ISender sender, HttpContext context) =>
         {
             var identifier = context.GetIdentifier();
-
-            // Map Request DTO to Command
-            var command = new CompileCodeCommand(
-                request.Code,
-                request.Input,
-                request.Language,
-                request.TimeLimit,
-                request.MemoryLimit,
-                request.OptimizationLevel
-            )
-            { Identifier = identifier };
+            var command = mapper.Map<CompileCodeCommand>(request) with { Identifier = identifier };
 
             var result = await sender.Send(command);
             return Results.Ok(result);
         });
 
-        group.MapPost("/judge", async (JudgeRequest request, ISender sender, HttpContext context) =>
+        group.MapPost("/judge", async (JudgeRequest request, IMapper mapper, ISender sender, HttpContext context) =>
         {
             var identifier = context.GetIdentifier();
-
-            // Map Request DTO to Command
-            var command = new JudgeSubmissionCommand(
-                request.Code,
-                request.TestCases,
-                request.TimeLimit,
-                request.MemoryLimit,
-                request.OptimizationLevel
-            )
-            { Identifier = identifier };
+            var command = mapper.Map<JudgeSubmissionCommand>(request) with { Identifier = identifier };
 
             var result = await sender.Send(command);
             return Results.Ok(result);
         });
 
-        group.MapPost("/judge-from-file", async (JudgeFromFileRequest request, ISender sender, HttpContext context) =>
+        group.MapPost("/judge-from-file", async (JudgeFromFileRequest request, IMapper mapper, ISender sender, HttpContext context) =>
         {
             var identifier = context.GetIdentifier();
-
-            // Map Request DTO to Command
-            var command = new JudgeFromFileCommand(
-                request.Code,
-                request.RoomId,
-                request.QuestionId,
-                request.IncludePrivate,
-                request.TimeLimit,
-                request.MemoryLimit,
-                request.OptimizationLevel
-            )
-            { Identifier = identifier };
+            var command = mapper.Map<JudgeFromFileCommand>(request) with { Identifier = identifier };
 
             var result = await sender.Send(command);
             return Results.Ok(result);

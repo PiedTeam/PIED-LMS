@@ -1,5 +1,7 @@
 global using System.Security.Claims;
 global using Carter;
+global using Mapster;
+global using MapsterMapper;
 global using MediatR;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Builder;

@@ -63,30 +63,23 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> Register(
         RegisterRequest request,
+        IMapper mapper,
         IMediator mediator)
     {
-        // Map Request DTO to Command
-        var command = new RegisterCommand(
-            request.Email,
-            request.FirstName,
-            request.LastName,
-            request.Password,
-            request.ConfirmPassword
-        );
-
+        var command = mapper.Map<RegisterCommand>(request);
         var result = await mediator.Send(command);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> Login(
         LoginRequest request,
+        IMapper mapper,
         IMediator mediator,
         HttpContext context,
         IConfiguration configuration,
         IWebHostEnvironment environment)
     {
-        // Map Request DTO to Command
-        var command = new LoginCommand(request.Email, request.Password);
+        var command = mapper.Map<LoginCommand>(request);
         var result = await mediator.Send(command);
 
         if (!result.Success || result.Data == null)
@@ -191,7 +184,7 @@ public class AuthenticationEndpoints : ICarterModule
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
 
-        // Map Request DTO to Command
+        // ChangePassword requires userId from context, so manual mapping is needed
         var command = new ChangePasswordCommand(
             userId,
             request.CurrentPassword,
@@ -205,10 +198,10 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
+        IMapper mapper,
         IMediator mediator)
     {
-        // Map Request DTO to Command
-        var command = new AssignRoleCommand(request.UserId, request.RoleName);
+        var command = mapper.Map<AssignRoleCommand>(request);
         var result = await mediator.Send(command);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
@@ -224,10 +217,10 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> GetAllUsers(
         [AsParameters] GetAllUsersRequest request,
+        IMapper mapper,
         IMediator mediator)
     {
-        // Map Request DTO to Query
-        var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
+        var query = mapper.Map<GetAllUsersQuery>(request);
         var result = await mediator.Send(query);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
