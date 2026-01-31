@@ -18,8 +18,9 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             IdentityException.TokenException => StatusCodes.Status401Unauthorized,
             BadRequestException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
-            ValidationException => StatusCodes.Status422UnprocessableEntity,
-            FluentValidation.ValidationException => StatusCodes.Status422UnprocessableEntity,
+            ValidationException => StatusCodes.Status400BadRequest,
+            FluentValidation.ValidationException => StatusCodes.Status400BadRequest,
+            RateLimitException => StatusCodes.Status429TooManyRequests,
             FormatException => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError
         };
@@ -49,6 +50,10 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             case FluentValidation.ValidationException fluentValEx:
                 problemDetails.Title = "Validation Error";
                 problemDetails.Extensions["errors"] = fluentValEx.Errors;
+                break;
+            case RateLimitException rateLimitEx:
+                if (rateLimitEx.RetryAfter.HasValue)
+                    httpContext.Response.Headers.RetryAfter = rateLimitEx.RetryAfter.Value.TotalSeconds.ToString("F0");
                 break;
         }
 

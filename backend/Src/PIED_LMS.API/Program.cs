@@ -9,6 +9,7 @@ builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.WriteTo.Console(
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddCompilerServices();
 
 var app = builder.Build();
 

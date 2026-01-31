@@ -1,6 +1,8 @@
+using PIED_LMS.Contract.Services.Identity.Requests;
+
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
-public class AssignRoleValidator : AbstractValidator<AssignRoleCommand>
+public class AssignRoleValidator : AbstractValidator<AssignRoleRequest>
 {
     public AssignRoleValidator()
     {

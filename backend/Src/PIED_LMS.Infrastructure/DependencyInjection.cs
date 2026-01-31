@@ -2,6 +2,7 @@ using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
+using PIED_LMS.Infrastructure.Services.Compiler;
 using PIED_LMS.Persistence;
 
 namespace PIED_LMS.Infrastructure;
@@ -60,6 +61,17 @@ public static class PersistenceExtensions
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+        return services;
+    }
+}
+
+public static class CompilerExtensions
+{
+    public static IServiceCollection AddCompilerServices(this IServiceCollection services)
+    {
+        services.AddSingleton<DockerCompilerService>();
+        services.AddSingleton<ICompilerService>(sp => sp.GetRequiredService<DockerCompilerService>());
+        services.AddHostedService(sp => sp.GetRequiredService<DockerCompilerService>());
         return services;
     }
 }

@@ -1,6 +1,8 @@
+using PIED_LMS.Contract.Services.Identity.Requests;
+
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
-public class LoginValidator : AbstractValidator<LoginCommand>
+public class LoginValidator : AbstractValidator<LoginRequest>
 {
     public LoginValidator()
     {
@@ -14,13 +16,10 @@ public class LoginValidator : AbstractValidator<LoginCommand>
     }
 }
 
-public class ChangePasswordValidator : AbstractValidator<ChangePasswordCommand>
+public class ChangePasswordValidator : AbstractValidator<ChangePasswordRequest>
 {
     public ChangePasswordValidator()
     {
-        RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("User ID is required");
-
         RuleFor(x => x.CurrentPassword)
             .NotEmpty().WithMessage("Current password is required");
 
@@ -32,7 +31,7 @@ public class ChangePasswordValidator : AbstractValidator<ChangePasswordCommand>
             .Matches("[0-9]").WithMessage("New password must contain at least one digit")
             .Matches("[^a-zA-Z0-9]").WithMessage("New password must contain at least one special character");
 
-        RuleFor(x => x.ConfirmNewPassword)
+        RuleFor(x => x.ConfirmPassword)
             .NotEmpty().WithMessage("Confirm new password is required")
             .Equal(x => x.NewPassword).WithMessage("Passwords must match");
     }

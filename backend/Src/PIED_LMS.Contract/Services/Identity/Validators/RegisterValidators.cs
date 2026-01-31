@@ -1,6 +1,8 @@
+using PIED_LMS.Contract.Services.Identity.Requests;
+
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
-public class RegisterValidator : AbstractValidator<RegisterCommand>
+public class RegisterValidator : AbstractValidator<RegisterRequest>
 {
     public RegisterValidator()
     {
