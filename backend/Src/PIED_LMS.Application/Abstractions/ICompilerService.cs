@@ -1,6 +1,3 @@
-using PIED_LMS.Contract.Services.Compiler.Requests;
-using PIED_LMS.Contract.Services.Compiler.Responses;
-
 namespace PIED_LMS.Application.Abstractions;
 
 public interface ICompilerService

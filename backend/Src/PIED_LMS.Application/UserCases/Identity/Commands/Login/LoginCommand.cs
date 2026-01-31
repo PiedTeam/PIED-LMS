@@ -1,5 +1,3 @@
-using PIED_LMS.Contract.Services.Identity.Responses;
-
 namespace PIED_LMS.Application.UserCases.Identity.Commands.Login;
 
 public record LoginCommand(

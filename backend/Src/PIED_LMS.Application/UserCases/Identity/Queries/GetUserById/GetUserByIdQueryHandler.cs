@@ -1,6 +1,3 @@
-using PIED_LMS.Contract.Services.Identity.Responses;
-using PIED_LMS.Domain.Entities;
-
 namespace PIED_LMS.Application.UserCases.Identity.Queries.GetUserById;
 
 public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, ILogger<GetUserByIdQueryHandler> logger)

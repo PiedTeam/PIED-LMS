@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using PIED_LMS.Contract.Services.Identity.Responses;
-using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Identity.Queries.GetAllUsers;
 

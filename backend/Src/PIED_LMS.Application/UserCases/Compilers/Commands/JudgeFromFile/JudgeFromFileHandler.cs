@@ -1,6 +1,3 @@
-using PIED_LMS.Application.Abstractions;
-using PIED_LMS.Contract.Services.Compiler.Responses;
-
 namespace PIED_LMS.Application.UserCases.Compilers.Commands.JudgeFromFile;
 
 public class JudgeFromFileHandler(ICompilerService compilerService) : IRequestHandler<JudgeFromFileCommand, JudgeResult>

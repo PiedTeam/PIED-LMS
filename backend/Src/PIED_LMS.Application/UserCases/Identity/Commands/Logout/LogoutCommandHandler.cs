@@ -1,6 +1,3 @@
-using PIED_LMS.Application.Abstractions;
-using PIED_LMS.Contract.Services.Identity.Responses;
-
 namespace PIED_LMS.Application.UserCases.Identity.Commands.Logout;
 
 public class LogoutCommandHandler(

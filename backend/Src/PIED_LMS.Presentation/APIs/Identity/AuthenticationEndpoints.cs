@@ -1,247 +1,234 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using PIED_LMS.Application.UserCases.Identity.Commands.AssignRole;
-using PIED_LMS.Application.UserCases.Identity.Commands.ChangePassword;
-using PIED_LMS.Application.UserCases.Identity.Commands.Login;
-using PIED_LMS.Application.UserCases.Identity.Commands.Logout;
-using PIED_LMS.Application.UserCases.Identity.Commands.RefreshToken;
-using PIED_LMS.Application.UserCases.Identity.Commands.Register;
-using PIED_LMS.Application.UserCases.Identity.Queries.GetAllUsers;
-using PIED_LMS.Application.UserCases.Identity.Queries.GetUserById;
-using PIED_LMS.Contract.Services.Identity.Requests;
-using PIED_LMS.Contract.Services.Identity.Responses;
-
 namespace PIED_LMS.Presentation.APIs.Identity;
 
 public class AuthenticationEndpoints : ICarterModule
 {
-  public void AddRoutes(IEndpointRouteBuilder app)
-  {
-    var group = app.MapGroup("/api/auth")
-        .WithName("Authentication")
-        .WithOpenApi();
-
-    group.MapPost("/register", Register)
-        .WithName("Register")
-        .WithOpenApi()
-        .Produces<ServiceResponse<RegisterResponse>>()
-        .Produces<ServiceResponse<RegisterResponse>>(StatusCodes.Status400BadRequest);
-
-    group.MapPost("/login", Login)
-        .WithName("Login")
-        .WithOpenApi()
-        .Produces<ServiceResponse<LoginResponse>>()
-        .Produces<ServiceResponse<LoginResponse>>(StatusCodes.Status401Unauthorized);
-
-    group.MapPost("/refresh", RefreshToken)
-        .WithName("RefreshToken")
-        .WithOpenApi()
-        .Produces<ServiceResponse<RefreshTokenResponse>>()
-        .Produces<ServiceResponse<RefreshTokenResponse>>(StatusCodes.Status401Unauthorized);
-
-    group.MapPost("/logout", Logout)
-        .WithName("Logout")
-        .WithOpenApi()
-        .RequireAuthorization()
-        .Produces<ServiceResponse<string>>()
-        .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
-
-    group.MapPost("/change-password", ChangePassword)
-        .WithName("ChangePassword")
-        .WithOpenApi()
-        .RequireAuthorization()
-        .Produces<ServiceResponse<string>>()
-        .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
-
-    group.MapPost("/assign-role", AssignRole)
-        .WithName("AssignRole")
-        .WithOpenApi()
-        .RequireAuthorization()
-        .Produces<ServiceResponse<string>>()
-        .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
-
-    group.MapGet("/users/{id}", GetUserById)
-        .WithName("GetUserById")
-        .WithOpenApi()
-        .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
-        .Produces<ServiceResponse<UserResponse>>()
-        .Produces<ServiceResponse<UserResponse>>(StatusCodes.Status404NotFound);
-
-    group.MapGet("/users", GetAllUsers)
-        .WithName("GetAllUsers")
-        .WithOpenApi()
-        .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
-        .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
-  }
-
-  private static async Task<IResult> Register(
-      RegisterRequest request,
-      IMediator mediator)
-  {
-    // Map Request DTO to Command
-    var command = new RegisterCommand(
-        request.Email,
-        request.FirstName,
-        request.LastName,
-        request.Password,
-        request.ConfirmPassword
-    );
-
-    var result = await mediator.Send(command);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-  }
-
-  private static async Task<IResult> Login(
-      LoginRequest request,
-      IMediator mediator,
-      HttpContext context,
-      IConfiguration configuration,
-      IWebHostEnvironment environment)
-  {
-    // Map Request DTO to Command
-    var command = new LoginCommand(request.Email, request.Password);
-    var result = await mediator.Send(command);
-
-    if (!result.Success || result.Data == null)
-      return Results.Unauthorized();
-
-    // Extract login result (contains response and refresh token)
-    var loginResult = result.Data;
-
-    // Set refresh token in HttpOnly cookie
-    var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-    var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-    var cookieOptions = new CookieOptions
+    public void AddRoutes(IEndpointRouteBuilder app)
     {
-      HttpOnly = true,
-      Secure = secureCookie,
-      SameSite = SameSiteMode.Lax,
-      Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-      Path = "/api/auth/refresh"
-    };
+        var group = app.MapGroup("/api/auth")
+            .WithName("Authentication")
+            .WithOpenApi();
 
-    context.Response.Cookies.Append("refreshToken", loginResult.RefreshToken, cookieOptions);
+        group.MapPost("/register", Register)
+            .WithName("Register")
+            .WithOpenApi()
+            .Produces<ServiceResponse<RegisterResponse>>()
+            .Produces<ServiceResponse<RegisterResponse>>(StatusCodes.Status400BadRequest);
 
-    // Return only login response (without refresh token)
-    var loginResponse = new ServiceResponse<LoginResponse>(
-        result.Success,
-        result.Message,
-        loginResult.Response
-    );
+        group.MapPost("/login", Login)
+            .WithName("Login")
+            .WithOpenApi()
+            .Produces<ServiceResponse<LoginResponse>>()
+            .Produces<ServiceResponse<LoginResponse>>(StatusCodes.Status401Unauthorized);
 
-    return Results.Ok(loginResponse);
-  }
+        group.MapPost("/refresh", RefreshToken)
+            .WithName("RefreshToken")
+            .WithOpenApi()
+            .Produces<ServiceResponse<RefreshTokenResponse>>()
+            .Produces<ServiceResponse<RefreshTokenResponse>>(StatusCodes.Status401Unauthorized);
 
-  private static async Task<IResult> RefreshToken(
-      HttpContext context,
-      IMediator mediator,
-      ILogger<AuthenticationEndpoints> logger,
-      IConfiguration configuration,
-      IWebHostEnvironment environment)
-  {
-    // Get refresh token from cookie
-    var refreshToken = context.Request.Cookies["refreshToken"];
+        group.MapPost("/logout", Logout)
+            .WithName("Logout")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
 
-    if (string.IsNullOrEmpty(refreshToken))
-    {
-      logger.LogWarning("Refresh token missing in cookie. HasRefreshTokenCookie: {HasCookie}",
-          context.Request.Cookies.ContainsKey("refreshToken"));
-      return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        group.MapPost("/change-password", ChangePassword)
+            .WithName("ChangePassword")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/assign-role", AssignRole)
+            .WithName("AssignRole")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+
+        group.MapGet("/users/{id}", GetUserById)
+            .WithName("GetUserById")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .Produces<ServiceResponse<UserResponse>>()
+            .Produces<ServiceResponse<UserResponse>>(StatusCodes.Status404NotFound);
+
+        group.MapGet("/users", GetAllUsers)
+            .WithName("GetAllUsers")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 
-    var command = new RefreshTokenCommand(refreshToken);
-    var result = await mediator.Send(command);
-
-    if (!result.Success || result.Data == null)
+    private static async Task<IResult> Register(
+        RegisterRequest request,
+        IMediator mediator)
     {
-      logger.LogWarning("Refresh token request failed: {Message}", result.Message);
-      return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        // Map Request DTO to Command
+        var command = new RegisterCommand(
+            request.Email,
+            request.FirstName,
+            request.LastName,
+            request.Password,
+            request.ConfirmPassword
+        );
+
+        var result = await mediator.Send(command);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
-    // Update refresh token cookie
-    var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-    var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-    var cookieOptions = new CookieOptions
+    private static async Task<IResult> Login(
+        LoginRequest request,
+        IMediator mediator,
+        HttpContext context,
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
-      HttpOnly = true,
-      Secure = secureCookie,
-      SameSite = SameSiteMode.Lax,
-      Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-      Path = "/api/auth/refresh"
-    };
+        // Map Request DTO to Command
+        var command = new LoginCommand(request.Email, request.Password);
+        var result = await mediator.Send(command);
 
-    context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
+        if (!result.Success || result.Data == null)
+            return Results.Unauthorized();
 
-    // Return new access token
-    return Results.Ok(result);
-  }
+        // Extract login result (contains response and refresh token)
+        var loginResult = result.Data;
 
-  private static async Task<IResult> Logout(
-      HttpContext context,
-      IMediator mediator)
-  {
-    var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-    if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-      return Results.Unauthorized();
+        // Set refresh token in HttpOnly cookie
+        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = secureCookie,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
+            Path = "/api/auth/refresh"
+        };
 
-    // Get refresh token from cookie and revoke it
-    var refreshToken = context.Request.Cookies["refreshToken"];
+        context.Response.Cookies.Append("refreshToken", loginResult.RefreshToken, cookieOptions);
 
-    // Delete refresh token cookie
-    context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
+        // Return only login response (without refresh token)
+        var loginResponse = new ServiceResponse<LoginResponse>(
+            result.Success,
+            result.Message,
+            loginResult.Response
+        );
 
-    var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
-    var result = await mediator.Send(command);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-  }
+        return Results.Ok(loginResponse);
+    }
 
-  private static async Task<IResult> ChangePassword(
-      HttpContext context,
-      ChangePasswordRequest request,
-      IMediator mediator)
-  {
-    var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-    if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-      return Results.Unauthorized();
+    private static async Task<IResult> RefreshToken(
+        HttpContext context,
+        IMediator mediator,
+        ILogger<AuthenticationEndpoints> logger,
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
+    {
+        // Get refresh token from cookie
+        var refreshToken = context.Request.Cookies["refreshToken"];
 
-    // Map Request DTO to Command
-    var command = new ChangePasswordCommand(
-        userId,
-        request.CurrentPassword,
-        request.NewPassword,
-        request.ConfirmPassword
-    );
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            logger.LogWarning("Refresh token missing in cookie. HasRefreshTokenCookie: {HasCookie}",
+                context.Request.Cookies.ContainsKey("refreshToken"));
+            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        }
 
-    var result = await mediator.Send(command);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-  }
+        var command = new RefreshTokenCommand(refreshToken);
+        var result = await mediator.Send(command);
 
-  private static async Task<IResult> AssignRole(
-      AssignRoleRequest request,
-      IMediator mediator)
-  {
-    // Map Request DTO to Command
-    var command = new AssignRoleCommand(request.UserId, request.RoleName);
-    var result = await mediator.Send(command);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-  }
+        if (!result.Success || result.Data == null)
+        {
+            logger.LogWarning("Refresh token request failed: {Message}", result.Message);
+            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+        }
 
-  private static async Task<IResult> GetUserById(
-      Guid id,
-      IMediator mediator)
-  {
-    var query = new GetUserByIdQuery(id);
-    var result = await mediator.Send(query);
-    return result.Success ? Results.Ok(result) : Results.NotFound(result);
-  }
+        // Update refresh token cookie
+        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = secureCookie,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
+            Path = "/api/auth/refresh"
+        };
 
-  private static async Task<IResult> GetAllUsers(
-      [AsParameters] GetAllUsersRequest request,
-      IMediator mediator)
-  {
-    // Map Request DTO to Query
-    var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
-    var result = await mediator.Send(query);
-    return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-  }
+        context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
+
+        // Return new access token
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> Logout(
+        HttpContext context,
+        IMediator mediator)
+    {
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Results.Unauthorized();
+
+        // Get refresh token from cookie and revoke it
+        var refreshToken = context.Request.Cookies["refreshToken"];
+
+        // Delete refresh token cookie
+        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
+
+        var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
+        var result = await mediator.Send(command);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
+
+    private static async Task<IResult> ChangePassword(
+        HttpContext context,
+        ChangePasswordRequest request,
+        IMediator mediator)
+    {
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Results.Unauthorized();
+
+        // Map Request DTO to Command
+        var command = new ChangePasswordCommand(
+            userId,
+            request.CurrentPassword,
+            request.NewPassword,
+            request.ConfirmPassword
+        );
+
+        var result = await mediator.Send(command);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
+
+    private static async Task<IResult> AssignRole(
+        AssignRoleRequest request,
+        IMediator mediator)
+    {
+        // Map Request DTO to Command
+        var command = new AssignRoleCommand(request.UserId, request.RoleName);
+        var result = await mediator.Send(command);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
+
+    private static async Task<IResult> GetUserById(
+        Guid id,
+        IMediator mediator)
+    {
+        var query = new GetUserByIdQuery(id);
+        var result = await mediator.Send(query);
+        return result.Success ? Results.Ok(result) : Results.NotFound(result);
+    }
+
+    private static async Task<IResult> GetAllUsers(
+        [AsParameters] GetAllUsersRequest request,
+        IMediator mediator)
+    {
+        // Map Request DTO to Query
+        var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
+        var result = await mediator.Send(query);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
 }
