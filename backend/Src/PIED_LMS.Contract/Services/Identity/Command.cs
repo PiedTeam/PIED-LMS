@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using PIED_LMS.Contract.Abstractions.Shared;
+
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Register Commands
@@ -42,3 +46,18 @@ public record LogoutCommand(
 public record RefreshTokenCommand(
     string RefreshToken
 ) : IRequest<ServiceResponse<RefreshTokenResponse>>;
+
+public record CreateRoomsCommand(
+     string Name,
+    string? Description,
+    DateTime StartTime,
+    DateTime EndTime
+    ) : IRequest<Result<Guid>>;
+
+// Import Student Command
+public record StudentImportDto(string Email, string FirstName, string LastName);
+public record ImportStudentsCommand(List<StudentImportDto> Students) : IRequest<ServiceResponse<string>>;
+
+// Mentor Registration & Approval Commands
+public record RegisterMentorCommand(string Email, string FirstName, string LastName, string Bio, string Password) : IRequest<ServiceResponse<string>>;
+public record ApproveMentorCommand(Guid UserId) : IRequest<ServiceResponse<string>>;

@@ -1,8 +1,13 @@
 using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
+using PIED_LMS.Infrastructure.Email;
 using PIED_LMS.Persistence;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace PIED_LMS.Infrastructure;
 
@@ -54,11 +59,34 @@ public static class PersistenceExtensions
             .AddEntityFrameworkStores<PiedLmsDbContext>()
             .AddDefaultTokenProviders();
 
+        services.AddHttpContextAccessor();
+
         services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(o =>
+        {
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = configuration["JwtSettings:Issuer"],
+                ValidAudience = configuration["JwtSettings:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!)),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true
+            };
+        });
 
         return services;
     }

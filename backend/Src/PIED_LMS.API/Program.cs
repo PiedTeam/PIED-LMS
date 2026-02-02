@@ -14,4 +14,17 @@ var app = builder.Build();
 
 app.UseInfrastructure();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await PIED_LMS.Infrastructure.DbInitializer.SeedAsync(services);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error seeding data: {ex.Message}");
+    }
+}
+
 await app.RunAsync();

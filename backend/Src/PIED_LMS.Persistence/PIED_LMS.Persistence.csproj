@@ -10,6 +10,7 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design"/>
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools"/>
         <PackageReference Include="EFCore.NamingConventions"/>
         <PackageReference Include="UUIDNext"/>
     </ItemGroup>
