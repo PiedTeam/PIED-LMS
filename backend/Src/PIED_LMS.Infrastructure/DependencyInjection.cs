@@ -1,4 +1,5 @@
 using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
@@ -61,6 +62,13 @@ public static class PersistenceExtensions
 
         services.AddHttpContextAccessor();
 
+        // Configure strongly-typed settings with validation
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+        services.AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection(EmailSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
@@ -84,16 +92,8 @@ public static class PersistenceExtensions
                 throw new InvalidOperationException("One or more JWT settings are missing. Please configure 'JwtSettings:Issuer', 'JwtSettings:Audience', and 'JwtSettings:Secret'.");
             }
 
-            o.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidIssuer = jwtIssuer,
-                ValidAudience = jwtAudience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true
-            };
+            o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(
+                jwtIssuer, jwtAudience, jwtSecret);
         });
 
         return services;

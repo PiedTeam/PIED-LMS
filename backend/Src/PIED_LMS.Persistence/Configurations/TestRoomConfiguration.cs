@@ -20,5 +20,10 @@ public class TestRoomConfiguration : IEntityTypeConfiguration<TestRoom>
         builder.HasIndex(x => x.JoinCode).IsUnique();
         
         builder.ToTable(t => t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"EndTime\" > \"StartTime\""));
+        
+        builder.HasOne(t => t.Creator)
+            .WithMany() 
+            .HasForeignKey(t => t.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict); 
     }
 }

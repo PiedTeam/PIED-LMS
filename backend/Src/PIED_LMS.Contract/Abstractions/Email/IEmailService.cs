@@ -1,6 +1,3 @@
-using System.Threading.Tasks;
-using System.Threading;
-
 namespace PIED_LMS.Contract.Abstractions.Email;
 
 public interface IEmailService

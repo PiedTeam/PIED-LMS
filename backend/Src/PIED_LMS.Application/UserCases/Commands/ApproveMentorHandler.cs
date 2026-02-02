@@ -24,7 +24,15 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEma
         if (string.IsNullOrEmpty(user.Email))
             return new ServiceResponse<string>(true, "Approved (No email sent: User email is missing)");
 
-        await emailService.SendEmailAsync(user.Email, "Approved", "You can now login.", ct);
+        try
+        {
+            await emailService.SendEmailAsync(user.Email, "Approved", "You can now login.", ct);
+        }
+        catch (Exception)
+        {
+            return new ServiceResponse<string>(true, "Approved (Warning: Failed to send email)");
+        }
+        
         return new ServiceResponse<string>(true, "Approved");
     }
 

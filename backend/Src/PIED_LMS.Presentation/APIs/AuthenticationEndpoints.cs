@@ -68,9 +68,10 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> Register(
         RegisterCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
@@ -79,9 +80,10 @@ public class AuthenticationEndpoints : ICarterModule
         IMediator mediator,
         HttpContext context,
         IConfiguration configuration,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
             return Results.Unauthorized();
@@ -118,7 +120,8 @@ public class AuthenticationEndpoints : ICarterModule
         IMediator mediator,
         ILogger<AuthenticationEndpoints> logger,
         IConfiguration configuration,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
         // Get refresh token from cookie
         var refreshToken = context.Request.Cookies["refreshToken"];
@@ -131,7 +134,7 @@ public class AuthenticationEndpoints : ICarterModule
         }
 
         var command = new RefreshTokenCommand(refreshToken);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
 
         if (!result.Success || result.Data == null)
         {
@@ -159,7 +162,8 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> Logout(
         HttpContext context,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
@@ -172,14 +176,15 @@ public class AuthenticationEndpoints : ICarterModule
         context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
 
         var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> ChangePassword(
         HttpContext context,
         ChangePasswordRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
@@ -192,34 +197,37 @@ public class AuthenticationEndpoints : ICarterModule
             request.ConfirmPassword
         );
 
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(request.UserId, request.RoleName);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> GetUserById(
         Guid id,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(id);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.NotFound(result);
     }
 
     private static async Task<IResult> GetAllUsers(
         [AsParameters] GetAllUsersRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

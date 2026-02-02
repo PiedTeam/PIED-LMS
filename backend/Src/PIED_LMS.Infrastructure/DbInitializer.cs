@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Entities;
 
@@ -14,9 +15,10 @@ public static class DbInitializer
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
         var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("DbInitializer");
 
         string[] roles = { RoleConstants.Administrator, RoleConstants.Teacher, RoleConstants.Student, RoleConstants.Mentor };
 
@@ -25,18 +27,28 @@ public static class DbInitializer
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+                var roleResult = await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create role {RoleName}. Errors: {Errors}", roleName, errors);
+                    throw new InvalidOperationException($"Failed to create role '{roleName}': {errors}");
+                }
+                logger.LogInformation("Successfully created role: {RoleName}", roleName);
             }
         }
 
-        // 2. Seed Users (Environment Gated)
-        // Only seed default users in Development OR if passwords are explicitly configured
-        
         var adminPassword = configuration["Seed:AdminPassword"];
-        var shouldSeedAdmin = !string.IsNullOrEmpty(adminPassword) || env.IsDevelopment();
-        if (string.IsNullOrEmpty(adminPassword) && env.IsDevelopment()) adminPassword = "Admin@123";
+        var teacherPassword = configuration["Seed:TeacherPassword"];
+        
+        if (env.IsDevelopment() && (string.IsNullOrEmpty(adminPassword) || string.IsNullOrEmpty(teacherPassword)))
+        {
+            throw new InvalidOperationException(
+                "Seed passwords are missing. Please configure 'Seed:AdminPassword' and 'Seed:TeacherPassword' in User Secrets.");
+        }
 
-        if (shouldSeedAdmin && !string.IsNullOrEmpty(adminPassword))
+        // 2. Seed Admin User
+        if (!string.IsNullOrEmpty(adminPassword))
         {
             var adminEmail = "admin@pied.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
@@ -51,19 +63,32 @@ public static class DbInitializer
                     IsActive = true,
                     EmailConfirmed = true
                 };
-                var result = await userManager.CreateAsync(adminUser, adminPassword);
-                if (result.Succeeded)
+
+                var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+                if (!createResult.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, RoleConstants.Administrator);
+                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create admin user {UserName} with role {Role}. Errors: {Errors}", 
+                        adminUser.UserName, RoleConstants.Administrator, errors);
+                    throw new InvalidOperationException($"Failed to create admin user '{adminUser.UserName}': {errors}");
                 }
+
+                var roleResult = await userManager.AddToRoleAsync(adminUser, RoleConstants.Administrator);
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
+                        RoleConstants.Administrator, adminUser.UserName, errors);
+                    throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
+                }
+
+                logger.LogInformation("Successfully created admin user: {UserName} with role: {Role}", 
+                    adminUser.UserName, RoleConstants.Administrator);
             }
         }
 
-        var teacherPassword = configuration["Seed:TeacherPassword"];
-        var shouldSeedTeacher = !string.IsNullOrEmpty(teacherPassword) || env.IsDevelopment();
-        if (string.IsNullOrEmpty(teacherPassword) && env.IsDevelopment()) teacherPassword = "Teacher@123";
-
-        if (shouldSeedTeacher && !string.IsNullOrEmpty(teacherPassword))
+        // 3. Seed Teacher User
+        if (!string.IsNullOrEmpty(teacherPassword))
         {
             var teacherEmail = "teacher@pied.com";
             var teacherUser = await userManager.FindByEmailAsync(teacherEmail);
@@ -78,11 +103,27 @@ public static class DbInitializer
                     IsActive = true,
                     EmailConfirmed = true
                 };
-                var result = await userManager.CreateAsync(teacherUser, teacherPassword);
-                if (result.Succeeded)
+
+                var createResult = await userManager.CreateAsync(teacherUser, teacherPassword);
+                if (!createResult.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
+                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}", 
+                        teacherUser.UserName, RoleConstants.Teacher, errors);
+                    throw new InvalidOperationException($"Failed to create teacher user '{teacherUser.UserName}': {errors}");
                 }
+
+                var roleResult = await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
+                        RoleConstants.Teacher, teacherUser.UserName, errors);
+                    throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Teacher}' to user '{teacherUser.UserName}': {errors}");
+                }
+
+                logger.LogInformation("Successfully created teacher user: {UserName} with role: {Role}", 
+                    teacherUser.UserName, RoleConstants.Teacher);
             }
         }
     }

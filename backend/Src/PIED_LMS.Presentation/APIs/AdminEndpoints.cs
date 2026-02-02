@@ -16,36 +16,44 @@ public class AdminEndpoints : ICarterModule
         var group = app.MapGroup("/api/admin")
             .WithName("Admin")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator });
-            ;
+            .WithTags("Admin")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
+            .ProducesProblem(StatusCodes.Status401Unauthorized, "application/problem+json")
+            .ProducesProblem(StatusCodes.Status403Forbidden, "application/problem+json");
 
         group.MapPost("/students/import", ImportStudents)
             .WithName("ImportStudents")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithSummary("Import students from CSV/Excel file")
+            .WithDescription("Bulk import students. Only administrators can perform this operation.")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json");
             
         group.MapPost("/mentors/{userId}/approve", ApproveMentor)
             .WithName("ApproveMentor")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithSummary("Approve a mentor application")
+            .WithDescription("Approve a user's application to become a mentor. Only administrators can perform this operation.")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json");
     }
 
     private static async Task<IResult> ImportStudents(
         ImportStudentsCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> ApproveMentor(
         Guid userId,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var command = new ApproveMentorCommand(userId);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

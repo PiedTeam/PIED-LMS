@@ -11,18 +11,25 @@ public class TestRoomEndpoints : ICarterModule
         var group = app.MapGroup("/api/test-rooms")
             .WithName("TestRooms")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher }); 
+            .WithTags("Test Rooms")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher })
+            .ProducesProblem(StatusCodes.Status401Unauthorized, "application/problem+json")
+            .ProducesProblem(StatusCodes.Status403Forbidden, "application/problem+json");
+            
         group.MapPost("/", CreateTestRoom)
             .WithName("CreateTestRoom")
             .WithOpenApi()
-            .Produces<ServiceResponse<Guid>>()
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest);
+            .WithSummary("Create a new test room")
+            .WithDescription("Creates a new test room. Only teachers can create test rooms.")
+            .Produces<ServiceResponse<Guid>>(StatusCodes.Status200OK, "application/json")
+            .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest, "application/json");
     }
     private static async Task<IResult> CreateTestRoom(
-        CreateRoomsCommand request,
-        IMediator mediator)
+        CreateRoomCommand request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

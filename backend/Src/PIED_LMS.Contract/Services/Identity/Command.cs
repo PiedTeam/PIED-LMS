@@ -47,17 +47,17 @@ public record RefreshTokenCommand(
     string RefreshToken
 ) : IRequest<ServiceResponse<RefreshTokenResponse>>;
 
-public record CreateRoomsCommand(
+public record CreateRoomCommand(
      string Name,
     string? Description,
-    DateTime StartTime,
-    DateTime EndTime
+    DateTimeOffset StartTime,
+    DateTimeOffset EndTime
     ) : IRequest<ServiceResponse<Guid>>;
 
 // Import Student Command
 public record StudentImportDto(string Email, string FirstName, string LastName);
-public record ImportStudentsCommand(List<StudentImportDto> Students) : IRequest<ServiceResponse<string>>;
+public record ImportStudentsCommand(IReadOnlyList<StudentImportDto> Students) : IRequest<ServiceResponse<string>>;
 
 // Mentor Registration & Approval Commands
-public record RegisterMentorCommand(string Email, string FirstName, string LastName, string Bio, string Password) : IRequest<ServiceResponse<string>>;
+public record RegisterMentorCommand(string Email, string FirstName, string LastName, string Bio, string Password, string ConfirmPassword) : IRequest<ServiceResponse<string>>;
 public record ApproveMentorCommand(Guid UserId) : IRequest<ServiceResponse<string>>;

@@ -8,18 +8,22 @@ public class MentorEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/mentors")
             .WithName("Mentors")
-            .WithOpenApi();
+            .WithOpenApi()
+            .WithTags("Mentors");
         group.MapPost("/request", RegisterMentor)
             .WithName("RegisterMentor")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithSummary("Request to become a mentor")
+            .WithDescription("Submit an application to become a mentor. Requires admin approval.")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json");
     }
     private static async Task<IResult> RegisterMentor(
         RegisterMentorCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

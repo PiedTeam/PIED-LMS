@@ -16,4 +16,23 @@ public class EFUnitOfWork(PiedLmsDbContext dbContext) : IUnitOfWork
     {
         return (IRepository<T>)_repositories.GetOrAdd(typeof(T), _ => new Repository<T>(dbContext));
     }
+
+    public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+    {
+        var strategy = dbContext.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await action();
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
+    }
 }
