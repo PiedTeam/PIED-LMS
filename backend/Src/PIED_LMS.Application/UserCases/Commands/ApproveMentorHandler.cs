@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
+
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
@@ -13,10 +12,19 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEma
     public async Task<ServiceResponse<string>> Handle(ApproveMentorCommand request, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(request.UserId.ToString());
-        user.IsActive = true;
-        await userManager.UpdateAsync(user);
+        if (user is null)
+            return new ServiceResponse<string>(false, "User not found");
 
-        await emailService.SendEmailAsync(user.Email, "Approved", "You can now login.");
+        user.IsActive = true;
+        var result = await userManager.UpdateAsync(user);
+        
+        if (!result.Succeeded)
+            return new ServiceResponse<string>(false, "Failed to approve mentor");
+
+        if (string.IsNullOrEmpty(user.Email))
+            return new ServiceResponse<string>(true, "Approved (No email sent: User email is missing)");
+
+        await emailService.SendEmailAsync(user.Email, "Approved", "You can now login.", ct);
         return new ServiceResponse<string>(true, "Approved");
     }
 

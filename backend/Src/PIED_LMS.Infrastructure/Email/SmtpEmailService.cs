@@ -14,15 +14,16 @@ public class SmtpEmailService : IEmailService
     {
         _configuration = configuration;
     }
-    public async Task SendEmailAsync(string to, string subject, string body)
+    public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
     {
         var settings = _configuration.GetSection("EmailSettings");
-        var client = new SmtpClient(settings["Host"], int.Parse(settings["Port"]))
+        using var client = new SmtpClient(settings["Host"], int.Parse(settings["Port"]))
         {
             Credentials = new NetworkCredential(settings["SenderEmail"], settings["SenderPassword"]),
             EnableSsl = true
         };
-        var mailMessage = new MailMessage
+        
+        using var mailMessage = new MailMessage
         {
             From = new MailAddress(settings["SenderEmail"], "PIED LMS"),
             Subject = subject,
@@ -30,6 +31,6 @@ public class SmtpEmailService : IEmailService
             IsBodyHtml = true
         };
         mailMessage.To.Add(to);
-        await client.SendMailAsync(mailMessage);
+        await client.SendMailAsync(mailMessage, cancellationToken);
     }
 }

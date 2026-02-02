@@ -1,11 +1,11 @@
-using System.Collections;
+
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Persistence;
 
 public class EFUnitOfWork(PiedLmsDbContext dbContext) : IUnitOfWork
 {
-    private readonly Hashtable _repositories = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Type, object> _repositories = new();
 
     public void Dispose() => dbContext.Dispose();
 
@@ -14,12 +14,6 @@ public class EFUnitOfWork(PiedLmsDbContext dbContext) : IUnitOfWork
 
     public IRepository<T> Repository<T>() where T : class
     {
-        var type = typeof(T).Name;
-        if (!_repositories.ContainsKey(type))
-        {
-            var repositoryInstance = new Repository<T>(dbContext);
-            _repositories.Add(type, repositoryInstance);
-        }
-        return (IRepository<T>)_repositories[type];
+        return (IRepository<T>)_repositories.GetOrAdd(typeof(T), _ => new Repository<T>(dbContext));
     }
 }

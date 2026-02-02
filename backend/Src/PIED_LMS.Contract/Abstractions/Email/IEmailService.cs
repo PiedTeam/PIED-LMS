@@ -1,0 +1,9 @@
+using System.Threading.Tasks;
+using System.Threading;
+
+namespace PIED_LMS.Contract.Abstractions.Email;
+
+public interface IEmailService
+{
+    Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default);
+}

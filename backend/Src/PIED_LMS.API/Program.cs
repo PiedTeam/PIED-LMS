@@ -23,7 +23,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error seeding data: {ex.Message}");
+        app.Logger.LogError(ex, "An error occurred while seeding the database.");
+        throw;
     }
 }
 

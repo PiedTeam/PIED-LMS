@@ -1,8 +1,7 @@
 using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Options;
-using PIED_LMS.Contract.Abstractions.Email;
-using PIED_LMS.Infrastructure.Email;
+
 
 namespace PIED_LMS.API;
 
@@ -61,8 +60,7 @@ public static class InfrastructureExtensions
 
        
         services.AddAuthorization();
-        //
-        services.AddScoped<IEmailService, SmtpEmailService>();
+
 
         return services;
     }

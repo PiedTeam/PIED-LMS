@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Domain.Constants;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -54,14 +55,14 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<UserResponse>>()
             .Produces<ServiceResponse<UserResponse>>(StatusCodes.Status404NotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 

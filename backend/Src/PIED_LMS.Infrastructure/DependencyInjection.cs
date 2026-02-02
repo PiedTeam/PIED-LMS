@@ -75,12 +75,20 @@ public static class PersistenceExtensions
             options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(o =>
         {
+            var jwtIssuer = configuration["JwtSettings:Issuer"];
+            var jwtAudience = configuration["JwtSettings:Audience"];
+            var jwtSecret = configuration["JwtSettings:Secret"];
+
+            if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) || string.IsNullOrWhiteSpace(jwtSecret))
+            {
+                throw new InvalidOperationException("One or more JWT settings are missing. Please configure 'JwtSettings:Issuer', 'JwtSettings:Audience', and 'JwtSettings:Secret'.");
+            }
+
             o.TokenValidationParameters = new TokenValidationParameters
             {
-                ValidIssuer = configuration["JwtSettings:Issuer"],
-                ValidAudience = configuration["JwtSettings:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!)),
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,

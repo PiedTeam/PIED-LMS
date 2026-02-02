@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Infrastructure;
@@ -11,7 +15,10 @@ public static class DbInitializer
         var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        string[] roles = { "Administrator", "Teacher", "Student", "Mentor" };
+        var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        string[] roles = { RoleConstants.Administrator, RoleConstants.Teacher, RoleConstants.Student, RoleConstants.Mentor };
 
         // 1. Seed Roles
         foreach (var roleName in roles)
@@ -22,45 +29,60 @@ public static class DbInitializer
             }
         }
 
-        // 2. Seed Admin User
-        var adminEmail = "admin@pied.com";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
+        // 2. Seed Users (Environment Gated)
+        // Only seed default users in Development OR if passwords are explicitly configured
+        
+        var adminPassword = configuration["Seed:AdminPassword"];
+        var shouldSeedAdmin = !string.IsNullOrEmpty(adminPassword) || env.IsDevelopment();
+        if (string.IsNullOrEmpty(adminPassword) && env.IsDevelopment()) adminPassword = "Admin@123";
+
+        if (shouldSeedAdmin && !string.IsNullOrEmpty(adminPassword))
         {
-            adminUser = new ApplicationUser
+            var adminEmail = "admin@pied.com";
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            if (adminUser == null)
             {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FirstName = "Super",
-                LastName = "Admin",
-                IsActive = true,
-                EmailConfirmed = true
-            };
-            var result = await userManager.CreateAsync(adminUser, "Admin@123");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "Administrator");
+                adminUser = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FirstName = "Super",
+                    LastName = "Admin",
+                    IsActive = true,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, RoleConstants.Administrator);
+                }
             }
         }
 
-        // 3. Seed Teacher User
-        var teacherEmail = "teacher@pied.com";
-        var teacherUser = await userManager.FindByEmailAsync(teacherEmail);
-        if (teacherUser == null)
+        var teacherPassword = configuration["Seed:TeacherPassword"];
+        var shouldSeedTeacher = !string.IsNullOrEmpty(teacherPassword) || env.IsDevelopment();
+        if (string.IsNullOrEmpty(teacherPassword) && env.IsDevelopment()) teacherPassword = "Teacher@123";
+
+        if (shouldSeedTeacher && !string.IsNullOrEmpty(teacherPassword))
         {
-            teacherUser = new ApplicationUser
+            var teacherEmail = "teacher@pied.com";
+            var teacherUser = await userManager.FindByEmailAsync(teacherEmail);
+            if (teacherUser == null)
             {
-                UserName = teacherEmail,
-                Email = teacherEmail,
-                FirstName = "John",
-                LastName = "Teacher",
-                IsActive = true,
-                EmailConfirmed = true
-            };
-            var result = await userManager.CreateAsync(teacherUser, "Teacher@123");
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(teacherUser, "Teacher");
+                teacherUser = new ApplicationUser
+                {
+                    UserName = teacherEmail,
+                    Email = teacherEmail,
+                    FirstName = "John",
+                    LastName = "Teacher",
+                    IsActive = true,
+                    EmailConfirmed = true
+                };
+                var result = await userManager.CreateAsync(teacherUser, teacherPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
+                }
             }
         }
     }

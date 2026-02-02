@@ -17,6 +17,8 @@ public class TestRoomConfiguration : IEntityTypeConfiguration<TestRoom>
             .HasMaxLength(10);
         builder.Property(x => x.Description)
             .HasMaxLength(500);
-        builder.HasIndex(x => x.JoinCode);
+        builder.HasIndex(x => x.JoinCode).IsUnique();
+        
+        builder.ToTable(t => t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"EndTime\" > \"StartTime\""));
     }
 }

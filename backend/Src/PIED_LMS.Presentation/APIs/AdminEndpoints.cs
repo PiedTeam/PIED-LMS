@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using PIED_LMS.Contract.Services.Identity;
 using Carter;
 using Microsoft.AspNetCore.Authorization;
+using PIED_LMS.Domain.Constants;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -15,18 +16,20 @@ public class AdminEndpoints : ICarterModule
         var group = app.MapGroup("/api/admin")
             .WithName("Admin")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" }) // Uncomment when ready
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator });
             ;
 
         group.MapPost("/students/import", ImportStudents)
             .WithName("ImportStudents")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>();
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
             
         group.MapPost("/mentors/{userId}/approve", ApproveMentor)
             .WithName("ApproveMentor")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>();
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
     }
 
     private static async Task<IResult> ImportStudents(

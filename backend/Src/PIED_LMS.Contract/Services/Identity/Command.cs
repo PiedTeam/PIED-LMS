@@ -52,7 +52,7 @@ public record CreateRoomsCommand(
     string? Description,
     DateTime StartTime,
     DateTime EndTime
-    ) : IRequest<Result<Guid>>;
+    ) : IRequest<ServiceResponse<Guid>>;
 
 // Import Student Command
 public record StudentImportDto(string Email, string FirstName, string LastName);
