@@ -83,7 +83,7 @@ public class AuthenticationEndpoints : ICarterModule
             Secure = secureCookie,
             SameSite = sameSite,
             Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/api/auth/refresh"
+            Path = "/api/auth"
         };
     }
 
@@ -156,7 +156,6 @@ public class AuthenticationEndpoints : ICarterModule
         }
 
         // Update refresh token cookie
-        // Update refresh token cookie
         var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 
         context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
@@ -178,7 +177,7 @@ public class AuthenticationEndpoints : ICarterModule
         var refreshToken = context.Request.Cookies["refreshToken"];
 
         // Delete refresh token cookie
-        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
+        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth" });
 
         var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
         var result = await mediator.Send(command, cancellationToken);

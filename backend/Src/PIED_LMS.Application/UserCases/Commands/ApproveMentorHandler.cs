@@ -1,11 +1,12 @@
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Domain.Entities;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands;
 
-public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEmailService emailService)
+public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEmailService emailService, ILogger<ApproveMentorHandler> logger)
     : IRequestHandler<ApproveMentorCommand, ServiceResponse<string>>
 {
     public async Task<ServiceResponse<string>> Handle(ApproveMentorCommand request, CancellationToken ct)
@@ -31,8 +32,9 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEma
         {
             await emailService.SendEmailAsync(user.Email, "Approved", "You can now login.", ct);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to send approval email to {Email}", user.Email);
             return new ServiceResponse<string>(true, "Approved (Warning: Failed to send email)");
         }
         

@@ -14,5 +14,10 @@ public class Repository<T>(PiedLmsDbContext dbContext) : IRepository<T> where T 
     public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
         return await dbContext.Set<T>().AnyAsync(predicate, cancellationToken);
+    }
+
+    public void Detach(T entity)
+    {
+        dbContext.Entry(entity).State = EntityState.Detached;
     }   
 }

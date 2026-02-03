@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
+using Carter;
+using MediatR;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 

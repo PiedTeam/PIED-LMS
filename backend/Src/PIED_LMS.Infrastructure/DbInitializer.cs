@@ -30,11 +30,21 @@ public static class DbInitializer
                 var roleResult = await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
                 if (!roleResult.Succeeded)
                 {
-                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to create role {RoleName}. Errors: {Errors}", roleName, errors);
-                    throw new InvalidOperationException($"Failed to create role '{roleName}': {errors}");
+                    if (roleResult.Errors.Any(e => e.Code == "DuplicateRoleName"))
+                    {
+                        logger.LogInformation("Role already exists (race condition handled): {RoleName}", roleName);
+                    }
+                    else
+                    {
+                        var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to create role {RoleName}. Errors: {Errors}", roleName, errors);
+                        throw new InvalidOperationException($"Failed to create role '{roleName}': {errors}");
+                    }
                 }
-                logger.LogInformation("Successfully created role: {RoleName}", roleName);
+                else
+                {
+                    logger.LogInformation("Successfully created role: {RoleName}", roleName);
+                }
             }
         }
 
@@ -73,10 +83,23 @@ public static class DbInitializer
                 var createResult = await userManager.CreateAsync(adminUser, adminPassword);
                 if (!createResult.Succeeded)
                 {
-                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to create admin user {UserName} with role {Role}. Errors: {Errors}", 
-                        adminUser.UserName, RoleConstants.Administrator, errors);
-                    throw new InvalidOperationException($"Failed to create admin user '{adminUser.UserName}': {errors}");
+                    if (createResult.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail"))
+                    {
+                        logger.LogInformation("Admin user collision detected (race condition), re-fetching...");
+                        adminUser = await userManager.FindByEmailAsync(adminEmail);
+                        if (adminUser == null)
+                        {
+                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                             throw new InvalidOperationException($"Admin user duplicate error but could not re-fetch user: {errors}");
+                        }
+                    }
+                    else
+                    {
+                        var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to create admin user {UserName} with role {Role}. Errors: {Errors}", 
+                            adminUser.UserName, RoleConstants.Administrator, errors);
+                        throw new InvalidOperationException($"Failed to create admin user '{adminUser.UserName}': {errors}");
+                    }
                 }
             }
 
@@ -116,10 +139,23 @@ public static class DbInitializer
                 var createResult = await userManager.CreateAsync(teacherUser, teacherPassword);
                 if (!createResult.Succeeded)
                 {
-                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}", 
-                        teacherUser.UserName, RoleConstants.Teacher, errors);
-                    throw new InvalidOperationException($"Failed to create teacher user '{teacherUser.UserName}': {errors}");
+                    if (createResult.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail"))
+                    {
+                         logger.LogInformation("Teacher user collision detected (race condition), re-fetching...");
+                         teacherUser = await userManager.FindByEmailAsync(teacherEmail);
+                         if (teacherUser == null)
+                         {
+                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                             throw new InvalidOperationException($"Teacher user duplicate error but could not re-fetch user: {errors}");
+                         }
+                    }
+                    else
+                    {
+                        var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}", 
+                            teacherUser.UserName, RoleConstants.Teacher, errors);
+                        throw new InvalidOperationException($"Failed to create teacher user '{teacherUser.UserName}': {errors}");
+                    }
                 }
             }
 

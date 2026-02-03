@@ -6,7 +6,7 @@ using PIED_LMS.Domain.Entities;
 using System.Security.Claims;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+
 namespace PIED_LMS.Application.UserCases.Commands.Room;
 
 public class CreateTestRoomHandler(
@@ -57,6 +57,7 @@ public class CreateTestRoomHandler(
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException)
             {
+                unitOfWork.Repository<TestRoom>().Detach(room);
                 if (attempt == maxRetries)
                     throw; 
             }
