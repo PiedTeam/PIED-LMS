@@ -1,10 +1,12 @@
 
 using Microsoft.AspNetCore.Http;
-
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
-
+using System.Security.Claims;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 namespace PIED_LMS.Application.UserCases.Commands.Room;
 
 public class CreateTestRoomHandler(
@@ -53,15 +55,10 @@ public class CreateTestRoomHandler(
                 await unitOfWork.CommitAsync(ct);
                 return new ServiceResponse<Guid>(true, "Room created successfully", room.Id);
             }
-            catch (Exception)
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
             {
                 if (attempt == maxRetries)
-                    throw; // Rethrow if retries exhausted
-                
-                // If it was a DbUpdateException due to unique constraint, we retry.
-                // Since we can't easily check exception type without EF dependency here, 
-                // and we did AnyAsync check, a failure likely implies race condition or other DB issue.
-                // We'll retry a few times.
+                    throw; 
             }
         }
         

@@ -41,9 +41,16 @@ public static class DbInitializer
         var adminPassword = configuration["Seed:AdminPassword"];
         var teacherPassword = configuration["Seed:TeacherPassword"];
         
-        if (env.IsDevelopment() && (string.IsNullOrEmpty(adminPassword) || string.IsNullOrEmpty(teacherPassword)))
+        if (env.IsDevelopment())
         {
-            logger.LogWarning("Seed passwords are missing in User Secrets. Seeding for Admin/Teacher will be skipped on this run.");
+            if (string.IsNullOrEmpty(adminPassword))
+            {
+                logger.LogWarning("Seed password missing for Admin. Admin seeding will be skipped.");
+            }
+            if (string.IsNullOrEmpty(teacherPassword))
+            {
+                logger.LogWarning("Seed password missing for Teacher. Teacher seeding will be skipped.");
+            }
         }
 
         // 2. Seed Admin User
@@ -71,7 +78,10 @@ public static class DbInitializer
                         adminUser.UserName, RoleConstants.Administrator, errors);
                     throw new InvalidOperationException($"Failed to create admin user '{adminUser.UserName}': {errors}");
                 }
+            }
 
+            if (!await userManager.IsInRoleAsync(adminUser, RoleConstants.Administrator))
+            {
                 var roleResult = await userManager.AddToRoleAsync(adminUser, RoleConstants.Administrator);
                 if (!roleResult.Succeeded)
                 {
@@ -80,10 +90,10 @@ public static class DbInitializer
                         RoleConstants.Administrator, adminUser.UserName, errors);
                     throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
                 }
-
-                logger.LogInformation("Successfully created admin user: {UserName} with role: {Role}", 
-                    adminUser.UserName, RoleConstants.Administrator);
             }
+
+            logger.LogInformation("Successfully created/ensured admin user: {UserName} with role: {Role}", 
+                adminUser.UserName, RoleConstants.Administrator);
         }
 
         // 3. Seed Teacher User
@@ -111,7 +121,10 @@ public static class DbInitializer
                         teacherUser.UserName, RoleConstants.Teacher, errors);
                     throw new InvalidOperationException($"Failed to create teacher user '{teacherUser.UserName}': {errors}");
                 }
+            }
 
+            if (!await userManager.IsInRoleAsync(teacherUser, RoleConstants.Teacher))
+            {
                 var roleResult = await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
                 if (!roleResult.Succeeded)
                 {
@@ -120,10 +133,10 @@ public static class DbInitializer
                         RoleConstants.Teacher, teacherUser.UserName, errors);
                     throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Teacher}' to user '{teacherUser.UserName}': {errors}");
                 }
-
-                logger.LogInformation("Successfully created teacher user: {UserName} with role: {Role}", 
-                    teacherUser.UserName, RoleConstants.Teacher);
             }
+
+            logger.LogInformation("Successfully created/ensured teacher user: {UserName} with role: {Role}", 
+                teacherUser.UserName, RoleConstants.Teacher);
         }
     }
 }

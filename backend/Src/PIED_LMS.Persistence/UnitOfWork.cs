@@ -26,6 +26,7 @@ public class EFUnitOfWork(PiedLmsDbContext dbContext) : IUnitOfWork
             try
             {
                 await action(cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
             }
             catch

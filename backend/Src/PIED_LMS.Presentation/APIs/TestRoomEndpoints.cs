@@ -30,6 +30,10 @@ public class TestRoomEndpoints : ICarterModule
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
+        if (result.Success && result.Data != Guid.Empty)
+        {
+            return Results.Created($"/api/test-rooms/{result.Data}", result);
+        }
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

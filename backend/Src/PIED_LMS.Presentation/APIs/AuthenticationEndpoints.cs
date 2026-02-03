@@ -66,6 +66,27 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 
+    private static CookieOptions CreateRefreshTokenCookieOptions(
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
+    {
+        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        
+        if (sameSite == SameSiteMode.None)
+            secureCookie = true;
+
+        return new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = secureCookie,
+            SameSite = sameSite,
+            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
+            Path = "/api/auth/refresh"
+        };
+    }
+
     private static async Task<IResult> Register(
         RegisterCommand request,
         IMediator mediator,
@@ -92,23 +113,8 @@ public class AuthenticationEndpoints : ICarterModule
         var loginResult = result.Data;
 
         // Set refresh token in HttpOnly cookie
-        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
-        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-        
-        if (sameSite == SameSiteMode.None)
-        {
-            secureCookie = true;
-        }
-
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = secureCookie,
-            SameSite = sameSite,
-            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/api/auth/refresh"
-        };
+        // Set refresh token in HttpOnly cookie
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 
         context.Response.Cookies.Append("refreshToken", loginResult.RefreshToken, cookieOptions);
 
@@ -150,23 +156,8 @@ public class AuthenticationEndpoints : ICarterModule
         }
 
         // Update refresh token cookie
-        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
-        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-        
-        if (sameSite == SameSiteMode.None)
-        {
-            secureCookie = true;
-        }
-
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = secureCookie,
-            SameSite = sameSite,
-            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/api/auth/refresh"
-        };
+        // Update refresh token cookie
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 
         context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
 

@@ -1,5 +1,3 @@
-using System;
-
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
