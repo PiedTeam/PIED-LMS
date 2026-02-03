@@ -39,7 +39,8 @@ public record AssignRoleCommand(
 // Logout Commands
 public record LogoutCommand(
     Guid UserId,
-    string RefreshToken
+    string? RefreshToken,
+    bool RevokeAll = false
 ) : IRequest<ServiceResponse<string>>;
 
 // Refresh Token Commands

@@ -67,7 +67,7 @@ namespace PIED_LMS.Persistence.Migrations;
             migrationBuilder.AddCheckConstraint(
                 name: "CK_TestRoom_EndTime_After_StartTime",
                 table: "test_rooms",
-                sql: "\"EndTime\" > \"StartTime\"");
+                sql: "\"end_time\" > \"start_time\"");
 
             migrationBuilder.AddForeignKey(
                 name: "fk_test_rooms_users_created_by",

@@ -69,6 +69,11 @@ public static class PersistenceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<JwtOption>()
+            .Bind(configuration.GetSection(JwtOption.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 

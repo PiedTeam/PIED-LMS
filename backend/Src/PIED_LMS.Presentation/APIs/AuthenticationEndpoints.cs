@@ -181,7 +181,7 @@ public class AuthenticationEndpoints : ICarterModule
         var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
         context.Response.Cookies.Delete("refreshToken", cookieOptions);
 
-        var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
+        var command = new LogoutCommand(userId, refreshToken ?? string.Empty, RevokeAll: string.IsNullOrEmpty(refreshToken));
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }

@@ -28,7 +28,16 @@ public static class DbInitializer
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                var roleResult = await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+                var description = roleName switch
+                {
+                    RoleConstants.Administrator => "Administrator with full access",
+                    RoleConstants.Teacher => "Teacher who can create and manage courses",
+                    RoleConstants.Student => "Student who can enroll in courses",
+                    RoleConstants.Mentor => "Mentor who can guide students",
+                    _ => $"Role for {roleName}"
+                };
+
+                var roleResult = await roleManager.CreateAsync(new ApplicationRole { Name = roleName, Description = description });
                 if (!roleResult.Succeeded)
                 {
                     if (roleResult.Errors.Any(e => e.Code == "DuplicateRoleName"))
