@@ -43,8 +43,7 @@ public static class DbInitializer
         
         if (env.IsDevelopment() && (string.IsNullOrEmpty(adminPassword) || string.IsNullOrEmpty(teacherPassword)))
         {
-            throw new InvalidOperationException(
-                "Seed passwords are missing. Please configure 'Seed:AdminPassword' and 'Seed:TeacherPassword' in User Secrets.");
+            logger.LogWarning("Seed passwords are missing in User Secrets. Seeding for Admin/Teacher will be skipped on this run.");
         }
 
         // 2. Seed Admin User

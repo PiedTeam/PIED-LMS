@@ -1,4 +1,3 @@
-using System;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Domain.Abstractions;
@@ -15,5 +14,5 @@ public class Repository<T>(PiedLmsDbContext dbContext) : IRepository<T> where T 
     public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
         return await dbContext.Set<T>().AnyAsync(predicate, cancellationToken);
-    }
+    }   
 }

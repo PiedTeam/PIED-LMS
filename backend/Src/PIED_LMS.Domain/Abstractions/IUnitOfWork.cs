@@ -6,6 +6,6 @@ public interface IUnitOfWork : IDisposable
 
     IRepository<T> Repository<T>() where T : class;
 
-    Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default);
 
 }

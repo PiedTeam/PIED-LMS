@@ -63,7 +63,7 @@ public static class PersistenceExtensions
         services.AddHttpContextAccessor();
 
         // Configure strongly-typed settings with validation
-        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+
         services.AddOptions<EmailSettings>()
             .Bind(configuration.GetSection(EmailSettings.SectionName))
             .ValidateDataAnnotations()

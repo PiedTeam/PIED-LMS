@@ -23,26 +23,49 @@ public class CreateTestRoomHandler(
         if (!Guid.TryParse(userIdString, out var teacherId))
             return new ServiceResponse<Guid>(false, "User not found.");
             
-        string joinCode;
-        do 
+        var maxRetries = 3;
+        var attempt = 0;
+        
+        while (attempt < maxRetries)
         {
-            joinCode = GenerateJoinCode();
-        } while (await unitOfWork.Repository<TestRoom>().AnyAsync(r => r.JoinCode == joinCode, ct));
+            attempt++;
+            string joinCode;
+            do 
+            {
+                joinCode = GenerateJoinCode();
+            } while (await unitOfWork.Repository<TestRoom>().AnyAsync(r => r.JoinCode == joinCode, ct));
 
-        var room = new TestRoom
-        {
-            Id = Guid.NewGuid(),
-            Name = request.Name,
-            Description = request.Description,
-            StartTime = request.StartTime,
-            EndTime = request.EndTime,
-            JoinCode = joinCode, 
-            CreatedBy = teacherId,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-        await unitOfWork.Repository<TestRoom>().AddAsync(room, ct);
-        await unitOfWork.CommitAsync(ct);
-        return new ServiceResponse<Guid>(true, "Room created successfully", room.Id);
+            var room = new TestRoom
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Description = request.Description,
+                StartTime = request.StartTime,
+                EndTime = request.EndTime,
+                JoinCode = joinCode, 
+                CreatedBy = teacherId,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            try
+            {
+                await unitOfWork.Repository<TestRoom>().AddAsync(room, ct);
+                await unitOfWork.CommitAsync(ct);
+                return new ServiceResponse<Guid>(true, "Room created successfully", room.Id);
+            }
+            catch (Exception)
+            {
+                if (attempt == maxRetries)
+                    throw; // Rethrow if retries exhausted
+                
+                // If it was a DbUpdateException due to unique constraint, we retry.
+                // Since we can't easily check exception type without EF dependency here, 
+                // and we did AnyAsync check, a failure likely implies race condition or other DB issue.
+                // We'll retry a few times.
+            }
+        }
+        
+        return new ServiceResponse<Guid>(false, "Failed to create room after multiple attempts.");
     }
     private static string GenerateJoinCode()
     {

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 
-namespace PIED_LMS.Presentation.Abstractions;
+namespace PIED_LMS.Presentation.APIs;
 
 public class TestRoomEndpoints : ICarterModule
 {

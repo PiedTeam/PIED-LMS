@@ -6,9 +6,11 @@ using PIED_LMS.Domain.Entities;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Abstractions;
 
+using Microsoft.Extensions.Configuration;
+
 namespace PIED_LMS.Application.UserCases.Commands;
 
-public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEmailService emailService, IUnitOfWork unitOfWork) 
+public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEmailService emailService, IUnitOfWork unitOfWork, IConfiguration configuration) 
     : IRequestHandler<ImportStudentsCommand, ServiceResponse<string>>
 {
     public async Task<ServiceResponse<string>> Handle(ImportStudentsCommand request, CancellationToken ct)
@@ -19,7 +21,7 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
         foreach (var st in request.Students) {
             try 
             {
-                await unitOfWork.ExecuteInTransactionAsync(async () => 
+                await unitOfWork.ExecuteInTransactionAsync(async (token) => 
                 {
                     var password = GenerateSecurePassword();
                     var user = new ApplicationUser 
@@ -40,11 +42,12 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
 
                     await userManager.AddToRoleAsync(user, RoleConstants.Student);
                     
-                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                    var encodedToken = System.Net.WebUtility.UrlEncode(token);
-                    var resetLink = $"http://localhost:3000/auth/reset-password?email={st.Email}&token={encodedToken}";
+                    var tokenReset = await userManager.GeneratePasswordResetTokenAsync(user);
+                    var encodedToken = System.Net.WebUtility.UrlEncode(tokenReset);
+                    var baseUrl = configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+                    var resetLink = $"{baseUrl}/auth/reset-password?email={st.Email}&token={encodedToken}";
                     
-                    await emailService.SendEmailAsync(st.Email, "Welcome to PIED LMS", $"Your account has been created. Please click the link to set your password: {resetLink}", ct);
+                    await emailService.SendEmailAsync(st.Email, "Welcome to PIED LMS", $"Your account has been created. Please click the link to set your password: {resetLink}", token);
                 }, ct);
                 
                 successCount++;
@@ -71,9 +74,9 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
         const string special = "!@#$%^&*";
 
         var chars = new char[12];
-        var random = System.Security.Cryptography.RandomNumberGenerator.Create();
+
         var buffer = new byte[12];
-        random.GetBytes(buffer);
+        System.Security.Cryptography.RandomNumberGenerator.Fill(buffer);
 
         // Ensure at least one of each required type
         chars[0] = lower[buffer[0] % lower.Length];

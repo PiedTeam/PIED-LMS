@@ -93,12 +93,19 @@ public class AuthenticationEndpoints : ICarterModule
 
         // Set refresh token in HttpOnly cookie
         var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
         var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        
+        if (sameSite == SameSiteMode.None)
+        {
+            secureCookie = true;
+        }
+
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = secureCookie,
-            SameSite = SameSiteMode.Lax, // Changed from Strict to Lax for better compatibility
+            SameSite = sameSite,
             Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
             Path = "/api/auth/refresh"
         };
@@ -144,12 +151,19 @@ public class AuthenticationEndpoints : ICarterModule
 
         // Update refresh token cookie
         var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
         var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        
+        if (sameSite == SameSiteMode.None)
+        {
+            secureCookie = true;
+        }
+
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = secureCookie,
-            SameSite = SameSiteMode.Lax,
+            SameSite = sameSite,
             Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
             Path = "/api/auth/refresh"
         };

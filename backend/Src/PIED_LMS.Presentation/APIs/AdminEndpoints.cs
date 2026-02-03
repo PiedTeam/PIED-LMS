@@ -35,7 +35,8 @@ public class AdminEndpoints : ICarterModule
             .WithSummary("Approve a mentor application")
             .WithDescription("Approve a user's application to become a mentor. Only administrators can perform this operation.")
             .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json");
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json")
+            .Produces<ServiceResponse<string>>(StatusCodes.Status404NotFound, "application/json");
     }
 
     private static async Task<IResult> ImportStudents(
@@ -54,6 +55,10 @@ public class AdminEndpoints : ICarterModule
     {
         var command = new ApproveMentorCommand(userId);
         var result = await mediator.Send(command, cancellationToken);
+        
+        if (result.IsNotFound)
+            return Results.NotFound(result);
+            
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

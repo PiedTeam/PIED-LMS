@@ -3,6 +3,7 @@ using System;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
+using PIED_LMS.Domain.Constants;
 
 namespace PIED_LMS.Application.UserCases.Commands;
 
@@ -13,7 +14,11 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEma
     {
         var user = await userManager.FindByIdAsync(request.UserId.ToString());
         if (user is null)
-            return new ServiceResponse<string>(false, "User not found");
+            return new ServiceResponse<string>(false, "User not found", IsNotFound: true);
+
+        var isMentor = await userManager.IsInRoleAsync(user, RoleConstants.Mentor);
+        if (!isMentor)
+            return new ServiceResponse<string>(false, "User is not a mentor");
 
         user.IsActive = true;
         var result = await userManager.UpdateAsync(user);

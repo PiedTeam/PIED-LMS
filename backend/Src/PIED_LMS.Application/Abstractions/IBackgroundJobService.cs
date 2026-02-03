@@ -21,12 +21,20 @@ public interface IBackgroundJobService
     Task<BackgroundJobStatus> GetJobStatusAsync(string jobId);
 }
 
+public enum JobStatus
+{
+    Enqueued,
+    Processing,
+    Succeeded,
+    Failed
+}
+
 public record BackgroundJobStatus(
     string JobId,
-    string Status, // "Enqueued", "Processing", "Succeeded", "Failed"
+    JobStatus Status,
     string? Message,
     int? ProcessedCount,
     int? TotalCount,
-    DateTime CreatedAt,
-    DateTime? CompletedAt
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? CompletedAt
 );

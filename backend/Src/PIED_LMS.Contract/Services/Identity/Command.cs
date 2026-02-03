@@ -48,11 +48,11 @@ public record RefreshTokenCommand(
 ) : IRequest<ServiceResponse<RefreshTokenResponse>>;
 
 public record CreateRoomCommand(
-     string Name,
+    string Name,
     string? Description,
     DateTimeOffset StartTime,
     DateTimeOffset EndTime
-    ) : IRequest<ServiceResponse<Guid>>;
+) : IRequest<ServiceResponse<Guid>>;
 
 // Import Student Command
 public record StudentImportDto(string Email, string FirstName, string LastName);

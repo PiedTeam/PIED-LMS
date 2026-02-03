@@ -10,25 +10,22 @@ public static class JwtTokenValidationParametersFactory
     /// </summary>
     public static TokenValidationParameters CreateForAuthentication(string issuer, string audience, string secret)
     {
-        ValidateJwtSettings(issuer, audience, secret);
-
-        return new TokenValidationParameters
-        {
-            ValidIssuer = issuer,
-            ValidAudience = audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.Zero // Remove default 5-minute clock skew
-        };
+        var parameters = CreateBaseTokenValidationParameters(issuer, audience, secret);
+        parameters.ValidateLifetime = true;
+        return parameters;
     }
 
     /// <summary>
     /// Creates TokenValidationParameters for validating expired tokens (used in refresh token flow)
     /// </summary>
     public static TokenValidationParameters CreateForExpiredTokenValidation(string issuer, string audience, string secret)
+    {
+        var parameters = CreateBaseTokenValidationParameters(issuer, audience, secret);
+        parameters.ValidateLifetime = false; // Allow expired tokens for refresh flow
+        return parameters;
+    }
+
+    private static TokenValidationParameters CreateBaseTokenValidationParameters(string issuer, string audience, string secret)
     {
         ValidateJwtSettings(issuer, audience, secret);
 
@@ -39,7 +36,6 @@ public static class JwtTokenValidationParametersFactory
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
             ValidateIssuer = true,
             ValidateAudience = true,
-            ValidateLifetime = false, // Allow expired tokens for refresh flow
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero
         };
