@@ -25,7 +25,7 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEma
         if (!result.Succeeded)
             return new ServiceResponse<string>(false, "Failed to approve mentor");
 
-        if (string.IsNullOrEmpty(user.Email))
+        if (string.IsNullOrWhiteSpace(user.Email))
             return new ServiceResponse<string>(true, "Approved (No email sent: User email is missing)");
 
         try

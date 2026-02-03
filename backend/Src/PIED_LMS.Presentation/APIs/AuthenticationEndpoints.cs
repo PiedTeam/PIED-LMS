@@ -48,7 +48,7 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
             .WithOpenApi()
-            .RequireAuthorization()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -112,7 +112,6 @@ public class AuthenticationEndpoints : ICarterModule
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;
 
-        // Set refresh token in HttpOnly cookie
         // Set refresh token in HttpOnly cookie
         var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 

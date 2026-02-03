@@ -23,7 +23,7 @@ public class TestRoomEndpoints : ICarterModule
             .WithOpenApi()
             .WithSummary("Create a new test room")
             .WithDescription("Creates a new test room. Only teachers can create test rooms.")
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status200OK, "application/json")
+            .Produces<ServiceResponse<Guid>>(StatusCodes.Status201Created, "application/json")
             .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest, "application/json");
     }
     private static async Task<IResult> CreateTestRoom(

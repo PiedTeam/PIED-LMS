@@ -55,16 +55,16 @@ public class CreateTestRoomHandler(
                 await unitOfWork.CommitAsync(ct);
                 return new ServiceResponse<Guid>(true, "Room created successfully", room.Id);
             }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+            catch (DbUpdateException)
             {
                 unitOfWork.Repository<TestRoom>().Detach(room);
                 if (attempt == maxRetries)
                     throw; 
             }
         }
-        
-        return new ServiceResponse<Guid>(false, "Failed to create room after multiple attempts.");
+        throw new InvalidOperationException("Unreachable code reached.");
     }
+
     private static string GenerateJoinCode()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
