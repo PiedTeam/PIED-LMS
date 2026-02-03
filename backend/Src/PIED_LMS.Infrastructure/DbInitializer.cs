@@ -109,10 +109,16 @@ public static class DbInitializer
                 var roleResult = await userManager.AddToRoleAsync(adminUser, RoleConstants.Administrator);
                 if (!roleResult.Succeeded)
                 {
-                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
-                        RoleConstants.Administrator, adminUser.UserName, errors);
-                    throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
+                    var alreadyInRole = roleResult.Errors.Any(e => e.Code == "UserAlreadyInRole");
+                    if (!alreadyInRole)
+                    {
+                        var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
+                            RoleConstants.Administrator, adminUser.UserName, errors);
+                        throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
+                    }
+                    logger.LogInformation("Admin user already in role: {UserName} / {Role}",
+                        adminUser.UserName, RoleConstants.Administrator);
                 }
             }
 
@@ -165,10 +171,16 @@ public static class DbInitializer
                 var roleResult = await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
                 if (!roleResult.Succeeded)
                 {
-                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
-                        RoleConstants.Teacher, teacherUser.UserName, errors);
-                    throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Teacher}' to user '{teacherUser.UserName}': {errors}");
+                    var alreadyInRole = roleResult.Errors.Any(e => e.Code == "UserAlreadyInRole");
+                    if (!alreadyInRole)
+                    {
+                        var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
+                            RoleConstants.Teacher, teacherUser.UserName, errors);
+                        throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Teacher}' to user '{teacherUser.UserName}': {errors}");
+                    }
+                    logger.LogInformation("Teacher user already in role: {UserName} / {Role}",
+                        teacherUser.UserName, RoleConstants.Teacher);
                 }
             }
 

@@ -165,6 +165,8 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> Logout(
         HttpContext context,
+        IConfiguration configuration,
+        IWebHostEnvironment environment,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
@@ -176,7 +178,8 @@ public class AuthenticationEndpoints : ICarterModule
         var refreshToken = context.Request.Cookies["refreshToken"];
 
         // Delete refresh token cookie
-        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth" });
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
+        context.Response.Cookies.Delete("refreshToken", cookieOptions);
 
         var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
         var result = await mediator.Send(command, cancellationToken);
