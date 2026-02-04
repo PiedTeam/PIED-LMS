@@ -22,7 +22,18 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
         
         // Track tokens for user to allow RevokeAll
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => new HashSet<string>());
+
+        // Use Set to ensure options are applied if creating new, or GetOrCreate with options
+        // Since GetOrCreate doesn't easily support "apply options only if new" without setup,
+        // we use a more explicit approach or GetOrCreate with factory that sets options.
+        var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+        {
+            entry.Priority = CacheItemPriority.NeverRemove;
+            // Align expiration with max possible refresh token lifetime or keep it indefinitely until revoked/cleared
+            // Given "NeverRemove" protects against compaction, but not app restart.
+            return new HashSet<string>();
+        });
+
         if (userTokens != null)
         {
              lock (userTokens) 
@@ -57,6 +68,10 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                 lock (userTokens)
                 {
                     userTokens.Remove(refreshToken);
+                    if (userTokens.Count == 0)
+                    {
+                        _memoryCache.Remove(userTokensKey);
+                    }
                 }
             }
         }

@@ -88,9 +88,9 @@ public static class PersistenceExtensions
             options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(o =>
         {
-            var jwtIssuer = configuration["JwtSettings:Issuer"];
-            var jwtAudience = configuration["JwtSettings:Audience"];
-            var jwtSecret = configuration["JwtSettings:Secret"];
+            var jwtIssuer = configuration[$"{JwtOption.SectionName}:Issuer"];
+            var jwtAudience = configuration[$"{JwtOption.SectionName}:Audience"];
+            var jwtSecret = configuration[$"{JwtOption.SectionName}:Secret"];
 
             if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) || string.IsNullOrWhiteSpace(jwtSecret))
             {

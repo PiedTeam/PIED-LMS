@@ -61,16 +61,20 @@ public static class DbInitializer
         var adminPassword = configuration["Seed:AdminPassword"];
         var teacherPassword = configuration["Seed:TeacherPassword"];
         
-        if (env.IsDevelopment())
+        if (string.IsNullOrEmpty(adminPassword))
         {
-            if (string.IsNullOrEmpty(adminPassword))
-            {
+            if (env.IsDevelopment())
                 logger.LogWarning("Seed password missing for Admin. Admin seeding will be skipped.");
-            }
-            if (string.IsNullOrEmpty(teacherPassword))
-            {
+            else
+                logger.LogError("Seed password missing for Admin in Production. Admin seeding will be skipped.");
+        }
+        
+        if (string.IsNullOrEmpty(teacherPassword))
+        {
+            if (env.IsDevelopment())
                 logger.LogWarning("Seed password missing for Teacher. Teacher seeding will be skipped.");
-            }
+            else
+                logger.LogError("Seed password missing for Teacher in Production. Teacher seeding will be skipped.");
         }
 
         // 2. Seed Admin User

@@ -20,6 +20,10 @@ public class LogoutCommandHandler(
             {
                  await refreshTokenService.RevokeRefreshTokenAsync(request.RefreshToken);
             }
+            else
+            {
+                return new ServiceResponse<string>(false, "Logout failed", "Refresh token required");
+            }
 
             return new ServiceResponse<string>(true, "Logout successful", "User logged out");
         }
