@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
@@ -6,9 +9,6 @@ using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
 using PIED_LMS.Persistence;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 
 namespace PIED_LMS.Infrastructure;
 
@@ -94,7 +94,7 @@ public static class PersistenceExtensions
 
             if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) || string.IsNullOrWhiteSpace(jwtSecret))
             {
-                throw new InvalidOperationException("One or more JWT settings are missing. Please configure 'JwtSettings:Issuer', 'JwtSettings:Audience', and 'JwtSettings:Secret'.");
+                throw new InvalidOperationException($"One or more JWT settings are missing. Please configure '{JwtOption.SectionName}:Issuer', '{JwtOption.SectionName}:Audience', and '{JwtOption.SectionName}:Secret'.");
             }
 
             o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(

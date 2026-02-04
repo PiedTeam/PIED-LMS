@@ -87,7 +87,8 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
             lock (userTokens)
             {
                 tokensToRevoke = userTokens.ToList();
-                userTokens.Clear();
+                // Remove tracking entry first while holding lock to prevent new additions to stale set
+                _memoryCache.Remove(userTokensKey);
             }
 
             foreach (var token in tokensToRevoke)
@@ -95,8 +96,6 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                  var cacheKey = $"{_cacheKeyPrefix}{token}";
                  _memoryCache.Remove(cacheKey);
             }
-            
-            _memoryCache.Remove(userTokensKey);
         }
         
         return Task.CompletedTask;
