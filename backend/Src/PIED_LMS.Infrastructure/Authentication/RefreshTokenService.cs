@@ -23,21 +23,25 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
         _memoryCache.Set(cacheKey, userId, cacheOptions);
 
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
-
-        lock (userLock)
+        
+        while (true)
         {
-            var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+            var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+            lock (userLock)
             {
-                entry.Priority = CacheItemPriority.NeverRemove;
-                return new HashSet<string>();
-            });
-
-            if (userTokens != null)
-            {
-                lock (userTokens)
+                if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
                 {
-                    userTokens.Add(refreshToken);
+                    var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+                    {
+                        entry.Priority = CacheItemPriority.NeverRemove;
+                        return new HashSet<string>();
+                    });
+
+                    if (userTokens != null)
+                    {
+                        userTokens.Add(refreshToken);
+                    }
+                    break;
                 }
             }
         }
@@ -62,22 +66,32 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
             _memoryCache.Remove(cacheKey);
             
             var userTokensKey = $"{_userTokensPrefix}{userId}";
-            
-            var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
-            lock (userLock)
+            bool shouldRemoveLock = false;
+
+            while (true)
             {
-                 if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
-                 {
-                     lock (userTokens)
-                     {
-                         userTokens.Remove(refreshToken);
-                         if (userTokens.Count == 0)
-                         {
-                             _memoryCache.Remove(userTokensKey);
-                             _userTokenLocks.TryRemove(userId, out _);
-                         }
-                     }
-                 }
+                var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+                lock (userLock)
+                {
+                    if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
+                    {
+                        if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+                        {
+                            userTokens.Remove(refreshToken);
+                            if (userTokens.Count == 0)
+                            {
+                                _memoryCache.Remove(userTokensKey);
+                                shouldRemoveLock = true;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (shouldRemoveLock)
+            {
+                _userTokenLocks.TryRemove(userId, out _);
             }
         }
         return Task.FromResult(existed);
@@ -86,25 +100,34 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     public Task RevokeAllRefreshTokenAsync(Guid userId)
     {
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+        List<string> tokensToRevoke = null;
         
-        lock (userLock)
+        while (true)
         {
-            if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+            var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+            lock (userLock)
             {
-                List<string> tokensToRevoke;
-                lock (userTokens)
+                if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
                 {
-                    tokensToRevoke = userTokens.ToList();
-                    _memoryCache.Remove(userTokensKey);
-                    _userTokenLocks.TryRemove(userId, out _);
+                    if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+                    {
+                        tokensToRevoke = userTokens.ToList();
+                        _memoryCache.Remove(userTokensKey);
+                    }
+                    break;
                 }
+            }
+        }
 
-                foreach (var token in tokensToRevoke)
-                {
-                     var cacheKey = $"{_cacheKeyPrefix}{token}";
-                     _memoryCache.Remove(cacheKey);
-                }
+        // Remove lock entry and revoke tokens after releasing lock
+        _userTokenLocks.TryRemove(userId, out _);
+
+        if (tokensToRevoke != null)
+        {
+            foreach (var token in tokensToRevoke)
+            {
+                 var cacheKey = $"{_cacheKeyPrefix}{token}";
+                 _memoryCache.Remove(cacheKey);
             }
         }
         
