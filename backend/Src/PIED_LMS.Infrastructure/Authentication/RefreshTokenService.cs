@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 using PIED_LMS.Application.Abstractions;
 
@@ -8,38 +9,37 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     private const string _cacheKeyPrefix = "RefreshToken_";
     private const string _userTokensPrefix = "UserTokens_";
     private readonly IMemoryCache _memoryCache = memoryCache;
+    private static readonly ConcurrentDictionary<Guid, object> _userTokenLocks = new();
 
     public Task<string> StoreRefreshTokenAsync(Guid userId, string refreshToken, int expirationDays)
     {
         var cacheKey = $"{_cacheKeyPrefix}{refreshToken}";
         var cacheOptions = new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(expirationDays),
-            SlidingExpiration = null
+             AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(expirationDays),
+             SlidingExpiration = null
         };
 
         _memoryCache.Set(cacheKey, userId, cacheOptions);
-        
-        // Track tokens for user to allow RevokeAll
+
         var userTokensKey = $"{_userTokensPrefix}{userId}";
+        var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
 
-        // Use Set to ensure options are applied if creating new, or GetOrCreate with options
-        // Since GetOrCreate doesn't easily support "apply options only if new" without setup,
-        // we use a more explicit approach or GetOrCreate with factory that sets options.
-        var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+        lock (userLock)
         {
-            entry.Priority = CacheItemPriority.NeverRemove;
-            // Align expiration with max possible refresh token lifetime or keep it indefinitely until revoked/cleared
-            // Given "NeverRemove" protects against compaction, but not app restart.
-            return new HashSet<string>();
-        });
+            var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+            {
+                entry.Priority = CacheItemPriority.NeverRemove;
+                return new HashSet<string>();
+            });
 
-        if (userTokens != null)
-        {
-             lock (userTokens) 
-             {
-                 userTokens.Add(refreshToken);
-             }
+            if (userTokens != null)
+            {
+                lock (userTokens)
+                {
+                    userTokens.Add(refreshToken);
+                }
+            }
         }
 
         return Task.FromResult(refreshToken);
@@ -63,16 +63,25 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
             
             // Cleanup from user tokens list
             var userTokensKey = $"{_userTokensPrefix}{userId}";
-            if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+            // Ideally we should lock here too, but for single token removal it's less critical 
+            // as long as the concurrent dictionary or collection handles it safely. 
+            // But consistent locking is better. 
+            // However, RevokeRefreshTokenAsync needs the userId which we just got.
+            
+            var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+            lock (userLock)
             {
-                lock (userTokens)
-                {
-                    userTokens.Remove(refreshToken);
-                    if (userTokens.Count == 0)
-                    {
-                        _memoryCache.Remove(userTokensKey);
-                    }
-                }
+                 if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+                 {
+                     lock (userTokens)
+                     {
+                         userTokens.Remove(refreshToken);
+                         if (userTokens.Count == 0)
+                         {
+                             _memoryCache.Remove(userTokensKey);
+                         }
+                     }
+                 }
             }
         }
         return Task.FromResult(existed);
@@ -81,20 +90,24 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     public Task RevokeAllRefreshTokenAsync(Guid userId)
     {
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+        var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
+        
+        lock (userLock)
         {
-            List<string> tokensToRevoke;
-            lock (userTokens)
+            if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
             {
-                tokensToRevoke = userTokens.ToList();
-                // Remove tracking entry first while holding lock to prevent new additions to stale set
-                _memoryCache.Remove(userTokensKey);
-            }
+                List<string> tokensToRevoke;
+                lock (userTokens)
+                {
+                    tokensToRevoke = userTokens.ToList();
+                    _memoryCache.Remove(userTokensKey);
+                }
 
-            foreach (var token in tokensToRevoke)
-            {
-                 var cacheKey = $"{_cacheKeyPrefix}{token}";
-                 _memoryCache.Remove(cacheKey);
+                foreach (var token in tokensToRevoke)
+                {
+                     var cacheKey = $"{_cacheKeyPrefix}{token}";
+                     _memoryCache.Remove(cacheKey);
+                }
             }
         }
         
