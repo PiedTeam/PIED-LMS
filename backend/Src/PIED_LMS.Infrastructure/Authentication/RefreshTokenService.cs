@@ -61,12 +61,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
         {
             _memoryCache.Remove(cacheKey);
             
-            // Cleanup from user tokens list
             var userTokensKey = $"{_userTokensPrefix}{userId}";
-            // Ideally we should lock here too, but for single token removal it's less critical 
-            // as long as the concurrent dictionary or collection handles it safely. 
-            // But consistent locking is better. 
-            // However, RevokeRefreshTokenAsync needs the userId which we just got.
             
             var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
             lock (userLock)
@@ -79,6 +74,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                          if (userTokens.Count == 0)
                          {
                              _memoryCache.Remove(userTokensKey);
+                             _userTokenLocks.TryRemove(userId, out _);
                          }
                      }
                  }
@@ -101,6 +97,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                 {
                     tokensToRevoke = userTokens.ToList();
                     _memoryCache.Remove(userTokensKey);
+                    _userTokenLocks.TryRemove(userId, out _);
                 }
 
                 foreach (var token in tokensToRevoke)
